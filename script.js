@@ -154,13 +154,15 @@ class VoiceRecorder {
 
   async startRecording(button, buttonId) {
     try {
-      // Request fresh stream
+      // Request fresh stream with better constraints
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
+          echoCancellation: false, // Turn off for better sensitivity
+          noiseSuppression: false, // Turn off for better sensitivity
           autoGainControl: true,
           sampleRate: 44100,
+          channelCount: 1, // Mono recording
+          volume: 1.0, // Maximum volume
         },
       });
 
@@ -168,28 +170,47 @@ class VoiceRecorder {
       this.currentButton = button;
       this.isRecording = true;
 
-      // Create MediaRecorder with MP3-compatible settings
-      const options = { mimeType: "audio/webm;codecs=opus" };
+      // Create MediaRecorder with better settings
+      let options = { mimeType: "audio/webm;codecs=opus" };
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = "audio/mp4";
+        options = { mimeType: "audio/mp4" };
       }
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = "audio/webm";
+        options = { mimeType: "audio/webm" };
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = {}; // Use default
       }
 
       this.mediaRecorder = new MediaRecorder(this.stream, options);
 
+      // Add better event handling
       this.mediaRecorder.ondataavailable = (event) => {
+        console.log("Audio data received:", event.data.size, "bytes");
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
         }
       };
 
       this.mediaRecorder.onstop = () => {
+        console.log(
+          "Recording stopped, total chunks:",
+          this.audioChunks.length
+        );
         this.processRecording(buttonId);
       };
 
-      this.mediaRecorder.start(100); // Collect data every 100ms
+      this.mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event.error);
+        this.showStatus("Recording error occurred", 3000);
+        this.resetButton();
+      };
+
+      // Start recording with larger chunks for better capture
+      this.mediaRecorder.start(1000); // Collect data every 1 second
+
+      // Add audio level monitoring
+      this.monitorAudioLevel();
 
       // Update UI
       button.classList.add("recording");
@@ -206,19 +227,70 @@ class VoiceRecorder {
     }
   }
 
-  async stopRecording() {
-    if (this.mediaRecorder && this.isRecording) {
-      this.mediaRecorder.stop();
-      this.stream.getTracks().forEach((track) => track.stop());
-      this.isRecording = false;
+  monitorAudioLevel() {
+    if (!this.stream) return;
 
-      this.showStatus("Processing recording...");
+    try {
+      // Create audio context for monitoring
+      this.audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const source = this.audioContext.createMediaStreamSource(this.stream);
+      const analyser = this.audioContext.createAnalyser();
+
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      source.connect(analyser);
+
+      const checkLevel = () => {
+        if (!this.isRecording) return;
+
+        analyser.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+
+        // Log audio level for debugging
+        if (average > 5) {
+          // Only log when there's some audio
+          console.log("Audio level:", average);
+        }
+
+        if (this.isRecording) {
+          requestAnimationFrame(checkLevel);
+        }
+      };
+
+      checkLevel();
+    } catch (error) {
+      console.warn("Audio monitoring not available:", error);
     }
   }
 
   async processRecording(buttonId) {
     try {
+      // Check if we have any audio data
+      if (this.audioChunks.length === 0) {
+        throw new Error("No audio data recorded");
+      }
+
+      const totalSize = this.audioChunks.reduce(
+        (size, chunk) => size + chunk.size,
+        0
+      );
+      console.log(
+        "Processing recording:",
+        this.audioChunks.length,
+        "chunks, total size:",
+        totalSize,
+        "bytes"
+      );
+
+      if (totalSize === 0) {
+        throw new Error("Audio recording is empty");
+      }
+
       const audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
+      console.log("Created audio blob:", audioBlob.size, "bytes");
 
       // Convert to MP3
       const mp3Blob = await this.convertToMp3(audioBlob);
@@ -229,7 +301,7 @@ class VoiceRecorder {
       this.showStatus("Recording saved successfully!", 3000);
     } catch (error) {
       console.error("Error processing recording:", error);
-      this.showStatus("Error saving recording. Please try again.", 3000);
+      this.showStatus(`Error: ${error.message}`, 5000);
     }
 
     this.resetButton();
