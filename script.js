@@ -571,11 +571,21 @@ const msalConfig = {
     cacheLocation: "localStorage",
     storeAuthStateInCookie: false,
   },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        console.log("MSAL Log:", message);
+      },
+      piiLoggingEnabled: false,
+      logLevel: 3, // Verbose logging
+    },
+  },
 };
 
 const loginRequest = {
-  scopes: ["Files.ReadWrite", "User.Read"],
+  scopes: [
+    "https://graph.microsoft.com/Files.ReadWrite",
+    "https://graph.microsoft.com/User.Read",
+  ],
+  prompt: "select_account", // Force account selection
 };
-
-// Initialize MSAL instance
-let msalInstance;
