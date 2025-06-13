@@ -14,6 +14,11 @@ const AZURE_CONFIG = {
   // Microsoft Forms URL (replace with your actual form)
   FORMS_URL:
     "https://forms.office.com/Pages/ResponsePage.aspx?id=YOUR_FORM_ID_HERE",
+
+  // Version info - update this with each deployment
+  VERSION: "1.0.3",
+  BUILD_DATE: "2025-06-13",
+  COMMIT_HASH: "main", // You can update this with actual git commit hash
 };
 
 // Export for use in main script

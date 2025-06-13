@@ -488,6 +488,13 @@ function openForms() {
 // Initialize the app when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   new VoiceRecorder();
+
+  // Display version information
+  const versionElement = document.getElementById("version-text");
+  if (versionElement && window.AZURE_CONFIG) {
+    versionElement.textContent = `v${window.AZURE_CONFIG.VERSION} (${window.AZURE_CONFIG.BUILD_DATE})`;
+    versionElement.title = `Build: ${window.AZURE_CONFIG.COMMIT_HASH} | Version: ${window.AZURE_CONFIG.VERSION}`;
+  }
 });
 
 // Service Worker registration for PWA functionality
