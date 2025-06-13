@@ -6,7 +6,7 @@ const AZURE_CONFIG = {
   CLIENT_ID: "cf187f7d-56fa-43ed-81f9-886671237afe",
 
   // Your GitHub Pages URL (e.g., 'https://yourusername.github.io/authenticity-unmasked')
-  REDIRECT_URI: "https://yourusername.github.io/authenticity-unmasked", // UPDATE WITH YOUR ACTUAL GITHUB USERNAME
+  REDIRECT_URI: "https://uselessnesses.github.io/authenticity-unmasked", // UPDATE WITH YOUR ACTUAL GITHUB USERNAME
 
   // Your tenant ID (since your app is "My organization only")
   TENANT_ID: "2e9f06b0-1669-4589-8789-10a06934dc61",
