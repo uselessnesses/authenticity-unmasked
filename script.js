@@ -1,3 +1,36 @@
+// Azure AD Configuration - using values from config.js
+const msalConfig = {
+  auth: {
+    clientId: window.AZURE_CONFIG.CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
+    redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
+  },
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false,
+  },
+  system: {
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        console.log("MSAL Log:", message);
+      },
+      piiLoggingEnabled: false,
+      logLevel: 3, // Verbose logging
+    },
+  },
+};
+
+const loginRequest = {
+  scopes: [
+    "https://graph.microsoft.com/Files.ReadWrite",
+    "https://graph.microsoft.com/User.Read",
+  ],
+  prompt: "select_account", // Force account selection
+};
+
+// Initialize MSAL instance variable
+let msalInstance;
+
 class VoiceRecorder {
   constructor() {
     this.mediaRecorder = null;
@@ -570,33 +603,3 @@ if ("serviceWorker" in navigator) {
     tryRegisterSW();
   });
 }
-
-// Azure AD Configuration - using values from config.js
-const msalConfig = {
-  auth: {
-    clientId: window.AZURE_CONFIG.CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
-    redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
-  },
-  cache: {
-    cacheLocation: "localStorage",
-    storeAuthStateInCookie: false,
-  },
-  system: {
-    loggerOptions: {
-      loggerCallback: (level, message, containsPii) => {
-        console.log("MSAL Log:", message);
-      },
-      piiLoggingEnabled: false,
-      logLevel: 3, // Verbose logging
-    },
-  },
-};
-
-const loginRequest = {
-  scopes: [
-    "https://graph.microsoft.com/Files.ReadWrite",
-    "https://graph.microsoft.com/User.Read",
-  ],
-  prompt: "select_account", // Force account selection
-};
