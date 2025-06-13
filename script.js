@@ -583,13 +583,68 @@ function openForms() {
 document.addEventListener("DOMContentLoaded", () => {
   new VoiceRecorder();
 
-  // Display version information
+  // Display version information - fully automatic
   const versionElement = document.getElementById("version-text");
-  if (versionElement && window.AZURE_CONFIG) {
-    versionElement.textContent = `v${window.AZURE_CONFIG.VERSION} (${window.AZURE_CONFIG.BUILD_DATE})`;
-    versionElement.title = `Build: ${window.AZURE_CONFIG.COMMIT_HASH} | Version: ${window.AZURE_CONFIG.VERSION}`;
+  if (versionElement) {
+    // Generate automatic version based on current timestamp
+    const now = new Date();
+
+    // Create version: YYYY.MM.DD.HHMM format
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hour = String(now.getHours()).padStart(2, "0");
+    const minute = String(now.getMinutes()).padStart(2, "0");
+
+    const autoVersion = `${year}.${month}.${day}.${hour}${minute}`;
+    const displayTime = now.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Try to get GitHub commit info if available
+    getGitHubCommitInfo().then((commitInfo) => {
+      if (commitInfo) {
+        versionElement.textContent = `v${autoVersion} (${commitInfo.sha.slice(
+          0,
+          7
+        )})`;
+        versionElement.title = `Build: ${displayTime} | Commit: ${commitInfo.sha.slice(
+          0,
+          7
+        )} | ${commitInfo.message}`;
+      } else {
+        versionElement.textContent = `v${autoVersion}`;
+        versionElement.title = `Build: ${displayTime} | Auto-generated version`;
+      }
+    });
   }
 });
+
+// Function to fetch GitHub commit information
+async function getGitHubCommitInfo() {
+  try {
+    // Get the latest commit from GitHub API
+    const response = await fetch(
+      "https://api.github.com/repos/uselessnesses/authenticity-unmasked/commits/main"
+    );
+    if (!response.ok) throw new Error("GitHub API request failed");
+
+    const commit = await response.json();
+    return {
+      sha: commit.sha,
+      message: commit.commit.message.split("\n")[0], // First line only
+      date: commit.commit.author.date,
+    };
+  } catch (error) {
+    console.log("Could not fetch GitHub commit info:", error);
+    return null;
+  }
+}
 
 // Service Worker registration for PWA functionality
 if ("serviceWorker" in navigator) {
