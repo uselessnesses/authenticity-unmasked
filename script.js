@@ -16,17 +16,37 @@ class VoiceRecorder {
 
   initializeMSAL() {
     try {
+      console.log("Initializing MSAL with config:", msalConfig);
       msalInstance = new msal.PublicClientApplication(msalConfig);
       console.log("MSAL initialized successfully");
+
+      // Add error event handler
+      msalInstance.addEventCallback((message) => {
+        console.log("MSAL Event:", message);
+      });
     } catch (error) {
       console.error("MSAL initialization failed:", error);
+      this.showStatus(
+        "Authentication setup failed. Please refresh the page.",
+        5000
+      );
     }
   }
 
   async getAccessToken() {
     try {
+      console.log("Starting authentication process...");
+      console.log("MSAL instance:", msalInstance);
+      console.log("Config:", {
+        clientId: window.AZURE_CONFIG.CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
+        redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
+      });
+
       // Try to get token silently first
       const accounts = msalInstance.getAllAccounts();
+      console.log("Existing accounts:", accounts.length);
+
       if (accounts.length > 0) {
         const silentRequest = {
           ...loginRequest,
@@ -34,19 +54,48 @@ class VoiceRecorder {
         };
 
         try {
+          console.log("Attempting silent token acquisition...");
           const response = await msalInstance.acquireTokenSilent(silentRequest);
+          console.log("Silent token acquisition successful");
           return response.accessToken;
         } catch (silentError) {
-          console.log("Silent token acquisition failed, trying popup...");
+          console.log("Silent token acquisition failed:", silentError);
+          console.log("Error code:", silentError.errorCode);
+          console.log("Error message:", silentError.errorMessage);
         }
       }
 
       // If silent fails, use popup
+      console.log("Attempting popup login...");
       const response = await msalInstance.loginPopup(loginRequest);
+      console.log("Popup login successful:", response);
       return response.accessToken;
     } catch (error) {
-      console.error("Authentication failed:", error);
-      throw new Error("OneDrive authentication failed. Please try again.");
+      console.error("Authentication failed - Full error:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error code:", error.errorCode);
+      console.error("Error description:", error.errorDescription);
+
+      // Provide more specific error messages
+      let userMessage = "OneDrive authentication failed. ";
+
+      if (error.errorCode === "invalid_client") {
+        userMessage +=
+          "Invalid client ID. Please check Azure app registration.";
+      } else if (error.errorCode === "redirect_uri_mismatch") {
+        userMessage +=
+          "Redirect URI mismatch. Please check Azure app authentication settings.";
+      } else if (error.errorCode === "access_denied") {
+        userMessage +=
+          "Access denied. Please ensure you have the required permissions.";
+      } else if (error.errorCode === "interaction_required") {
+        userMessage += "User interaction required. Please try again.";
+      } else {
+        userMessage += `Error: ${error.message || "Unknown error occurred"}`;
+      }
+
+      throw new Error(userMessage);
     }
   }
 
