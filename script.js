@@ -137,6 +137,8 @@ class VoiceRecorder {
   }
 
   async handleRecordClick(event) {
+    console.log("Button clicked, isRecording:", this.isRecording);
+
     if (!this.hasConsent) {
       this.showGDPRModal();
       return;
@@ -145,9 +147,18 @@ class VoiceRecorder {
     const button = event.currentTarget;
     const buttonId = button.getAttribute("data-button-id");
 
+    console.log(
+      "Button ID:",
+      buttonId,
+      "Current recording state:",
+      this.isRecording
+    );
+
     if (!this.isRecording) {
+      console.log("Starting recording...");
       await this.startRecording(button, buttonId);
     } else {
+      console.log("Stopping recording...");
       await this.stopRecording();
     }
   }
@@ -263,6 +274,45 @@ class VoiceRecorder {
       checkLevel();
     } catch (error) {
       console.warn("Audio monitoring not available:", error);
+    }
+  }
+
+  async stopRecording() {
+    console.log(
+      "stopRecording called, mediaRecorder state:",
+      this.mediaRecorder?.state
+    );
+
+    if (this.mediaRecorder && this.isRecording) {
+      console.log("Actually stopping recording...");
+
+      // Set flag first to prevent race conditions
+      this.isRecording = false;
+
+      // Stop the media recorder
+      if (this.mediaRecorder.state === "recording") {
+        this.mediaRecorder.stop();
+        console.log("MediaRecorder stopped");
+      }
+
+      // Stop all audio tracks
+      if (this.stream) {
+        this.stream.getTracks().forEach((track) => {
+          track.stop();
+          console.log("Audio track stopped");
+        });
+        this.stream = null;
+      }
+
+      // Clean up audio context
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
+
+      this.showStatus("Processing recording...");
+    } else {
+      console.log("stopRecording called but not recording or no mediaRecorder");
     }
   }
 
