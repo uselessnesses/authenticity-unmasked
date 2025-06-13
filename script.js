@@ -374,9 +374,12 @@ class VoiceRecorder {
 
       this.showStatus("Uploading to OneDrive...");
 
-      // Create filename with timestamp and button ID
+      // Create filename with timestamp and button ID - add error checking
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `voice-recording-button-${buttonId}-${timestamp}.mp3`;
+      const safeButtonId = buttonId || "unknown";
+      const filename = `voice-recording-button-${safeButtonId}-${timestamp}.mp3`;
+
+      console.log("Creating filename:", filename);
 
       // Upload file directly to OneDrive using Microsoft Graph API
       const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/Exhibition-Recordings/${filename}:/content`;
@@ -409,12 +412,16 @@ class VoiceRecorder {
     } catch (error) {
       console.error("OneDrive upload failed:", error);
 
-      // Fallback: create download link for manual saving
+      // Fallback: create download link for manual saving with safe filename
+      const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const safeButtonId = buttonId || "unknown";
+      const fallbackFilename = `voice-recording-button-${safeButtonId}-${safeTimestamp}.mp3`;
+
       this.showStatus(
         "OneDrive upload failed. Downloading file locally...",
         3000
       );
-      this.createDownloadLink(audioBlob, filename);
+      this.createDownloadLink(audioBlob, fallbackFilename);
 
       throw error;
     }
