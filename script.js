@@ -1,24 +1,6 @@
-// Azure AD Configuration - using values from config.js
-const msalConfig = {
-  auth: {
-    clientId: window.AZURE_CONFIG.CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
-    redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
-  },
-  cache: {
-    cacheLocation: "localStorage",
-    storeAuthStateInCookie: false,
-  },
-  system: {
-    loggerOptions: {
-      loggerCallback: (level, message, containsPii) => {
-        console.log("MSAL Log:", message);
-      },
-      piiLoggingEnabled: false,
-      logLevel: 3, // Verbose logging
-    },
-  },
-};
+// Initialize MSAL instance variable
+let msalInstance = null;
+let msalConfig = null;
 
 const loginRequest = {
   scopes: [
@@ -28,9 +10,7 @@ const loginRequest = {
   prompt: "select_account", // Force account selection
 };
 
-// Initialize MSAL instance variable
-let msalInstance;
-
+// Azure AD Configuration - using values from config.js
 class VoiceRecorder {
   constructor() {
     this.mediaRecorder = null;
@@ -49,9 +29,36 @@ class VoiceRecorder {
 
   initializeMSAL() {
     try {
+      // Ensure Azure config is available
+      if (!window.AZURE_CONFIG) {
+        throw new Error("Azure configuration not loaded");
+      }
+
+      // Create MSAL configuration
+      msalConfig = {
+        auth: {
+          clientId: window.AZURE_CONFIG.CLIENT_ID,
+          authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
+          redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
+        },
+        cache: {
+          cacheLocation: "localStorage",
+          storeAuthStateInCookie: false,
+        },
+        system: {
+          loggerOptions: {
+            loggerCallback: (level, message, containsPii) => {
+              console.log("MSAL Log:", message);
+            },
+            piiLoggingEnabled: false,
+            logLevel: 3, // Verbose logging
+          },
+        },
+      };
+
       console.log("Initializing MSAL with config:", msalConfig);
       msalInstance = new msal.PublicClientApplication(msalConfig);
-      console.log("MSAL initialized successfully");
+      console.log("MSAL initialized successfully", msalInstance);
 
       // Add error event handler
       msalInstance.addEventCallback((message) => {
@@ -69,12 +76,17 @@ class VoiceRecorder {
   async getAccessToken() {
     try {
       console.log("Starting authentication process...");
+
+      // Check if MSAL instance exists
+      if (!msalInstance) {
+        console.error("MSAL instance not initialized");
+        throw new Error(
+          "Authentication not properly initialized. Please refresh the page."
+        );
+      }
+
       console.log("MSAL instance:", msalInstance);
-      console.log("Config:", {
-        clientId: window.AZURE_CONFIG.CLIENT_ID,
-        authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
-        redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
-      });
+      console.log("Config:", msalConfig);
 
       // Try to get token silently first
       const accounts = msalInstance.getAllAccounts();
