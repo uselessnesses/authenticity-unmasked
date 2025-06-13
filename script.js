@@ -549,14 +549,25 @@ document.addEventListener("DOMContentLoaded", () => {
 // Service Worker registration for PWA functionality
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered: ", registration);
-      })
-      .catch((registrationError) => {
-        console.log("SW registration failed: ", registrationError);
-      });
+    // Try multiple paths for service worker registration
+    const swPaths = ["./sw.js", "/authenticity-unmasked/sw.js", "sw.js"];
+
+    async function tryRegisterSW() {
+      for (const path of swPaths) {
+        try {
+          const registration = await navigator.serviceWorker.register(path);
+          console.log("SW registered successfully:", registration);
+          return; // Success, exit the loop
+        } catch (error) {
+          console.log(`SW registration failed for ${path}:`, error.message);
+        }
+      }
+      console.log(
+        "All SW registration attempts failed. PWA features disabled."
+      );
+    }
+
+    tryRegisterSW();
   });
 }
 
