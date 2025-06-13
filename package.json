@@ -1,0 +1,18 @@
+{
+  "name": "onedrive-upload-function",
+  "version": "1.0.0",
+  "description": "Azure Function to upload recordings to OneDrive anonymously",
+  "main": "azure-function.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "@azure/identity": "^4.0.0"
+  },
+  "devDependencies": {
+    "@azure/functions-core-tools": "^4.0.0"
+  }
+}

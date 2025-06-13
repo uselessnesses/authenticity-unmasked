@@ -461,89 +461,60 @@ class VoiceRecorder {
 
   async saveToOneDrive(audioBlob, buttonId) {
     try {
-      this.showStatus("Authenticating with OneDrive...");
+      this.showStatus("Saving to OneDrive...");
 
-      // Get access token
-      const accessToken = await this.getAccessToken();
-
-      this.showStatus("Uploading to OneDrive...");
-
-      // Create filename with timestamp and button ID - add error checking
+      // Create filename with timestamp and button ID
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const safeButtonId = buttonId || "unknown";
       const filename = `voice-recording-button-${safeButtonId}-${timestamp}.mp3`;
 
       console.log("Creating filename:", filename);
 
-      // Upload file directly to OneDrive using Microsoft Graph API
-      const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/Exhibition-Recordings/${filename}:/content`;
+      // Send to your backend service that handles OneDrive authentication
+      await this.uploadViaBackend(audioBlob, filename);
 
-      const response = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "audio/mp3",
-        },
-        body: audioBlob,
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Upload failed: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const result = await response.json();
-      console.log("File uploaded to OneDrive successfully:", result);
-
-      // Store recording metadata
-      this.storeRecordingMetadata(
-        buttonId,
-        filename,
-        audioBlob.size,
-        result.webUrl
-      );
+      this.showStatus("Recording saved to OneDrive!", 3000);
     } catch (error) {
-      console.error("OneDrive upload failed:", error);
+      console.error("OneDrive save failed:", error);
 
-      // Fallback: create download link for manual saving with safe filename
+      // Fallback: create download link for manual saving
       const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const safeButtonId = buttonId || "unknown";
       const fallbackFilename = `voice-recording-button-${safeButtonId}-${safeTimestamp}.mp3`;
 
-      this.showStatus(
-        "OneDrive upload failed. Downloading file locally...",
-        3000
-      );
+      this.showStatus("Auto-save failed. Downloading file locally...", 3000);
       this.createDownloadLink(audioBlob, fallbackFilename);
-
-      throw error;
     }
   }
 
-  createDownloadLink(blob, filename) {
-    // Create temporary download link for testing
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
+  async uploadViaBackend(audioBlob, filename) {
+    try {
+      // Convert blob to form data for backend upload
+      const formData = new FormData();
+      formData.append("audio", audioBlob, filename);
+      formData.append("filename", filename);
+      formData.append("timestamp", new Date().toISOString());
 
-  storeRecordingMetadata(buttonId, filename, fileSize, oneDriveUrl = null) {
-    const recordings = JSON.parse(localStorage.getItem("recordings") || "[]");
-    recordings.push({
-      buttonId,
-      filename,
-      fileSize,
-      timestamp: new Date().toISOString(),
-      oneDriveUrl,
-      uploaded: !!oneDriveUrl,
-    });
-    localStorage.setItem("recordings", JSON.stringify(recordings));
+      // Send to your backend service (replace with your actual backend URL)
+      const backendUrl =
+        window.AZURE_CONFIG.BACKEND_URL ||
+        "https://your-backend-service.com/upload";
+
+      const response = await fetch(backendUrl, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Recording uploaded to OneDrive via backend:", result);
+    } catch (error) {
+      console.error("Backend upload failed:", error);
+      throw error;
+    }
   }
 
   resetButton() {

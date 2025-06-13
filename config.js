@@ -15,6 +15,10 @@ const AZURE_CONFIG = {
   FORMS_URL:
     "https://forms.office.com/Pages/ResponsePage.aspx?id=YOUR_FORM_ID_HERE",
 
+  // Backend service for anonymous OneDrive uploads
+  BACKEND_URL:
+    "https://your-function-app.azurewebsites.net/api/uploadToOneDrive", // Replace after deploying Azure Function
+
   // Version info - update this with each deployment
   VERSION: "1.0.4", // Increment this manually for each push
   BUILD_DATE: "2025-06-13",
