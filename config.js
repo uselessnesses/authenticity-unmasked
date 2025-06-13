@@ -3,10 +3,13 @@
 
 const AZURE_CONFIG = {
   // Get this from Azure Portal > App Registrations > Your App > Overview
-  CLIENT_ID: "YOUR_AZURE_CLIENT_ID_HERE",
+  CLIENT_ID: "cf187f7d-56fa-43ed-81f9-886671237afe",
 
   // Your GitHub Pages URL (e.g., 'https://yourusername.github.io/authenticity-unmasked')
-  REDIRECT_URI: "YOUR_GITHUB_PAGES_URL_HERE",
+  REDIRECT_URI: "https://yourusername.github.io/authenticity-unmasked", // UPDATE WITH YOUR ACTUAL GITHUB USERNAME
+
+  // Your tenant ID (since your app is "My organization only")
+  TENANT_ID: "2e9f06b0-1669-4589-8789-10a06934dc61",
 
   // Microsoft Forms URL (replace with your actual form)
   FORMS_URL:

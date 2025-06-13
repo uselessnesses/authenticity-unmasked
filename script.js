@@ -379,7 +379,7 @@ if ("serviceWorker" in navigator) {
 const msalConfig = {
   auth: {
     clientId: window.AZURE_CONFIG.CLIENT_ID,
-    authority: "https://login.microsoftonline.com/common",
+    authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
     redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
   },
   cache: {
