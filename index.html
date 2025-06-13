@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Recording Interface</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="button-grid">
+        <button class="record-btn" data-button-id="1">
+          <span class="btn-text">Record Response 1</span>
+          <span class="recording-indicator"></span>
+        </button>
+
+        <button class="record-btn" data-button-id="2">
+          <span class="btn-text">Record Response 2</span>
+          <span class="recording-indicator"></span>
+        </button>
+
+        <button class="record-btn" data-button-id="3">
+          <span class="btn-text">Record Response 3</span>
+          <span class="recording-indicator"></span>
+        </button>
+
+        <button class="record-btn" data-button-id="4">
+          <span class="btn-text">Record Response 4</span>
+          <span class="recording-indicator"></span>
+        </button>
+
+        <button class="forms-btn" onclick="openForms()">
+          <span class="btn-text">Alternative Survey</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- GDPR Consent Modal -->
+    <div id="gdpr-modal" class="modal">
+      <div class="modal-content">
+        <h3>Data Collection Consent</h3>
+        <p>
+          Your voice recording will be stored securely on Microsoft OneDrive for
+          research purposes. You can request deletion at any time by contacting
+          us.
+        </p>
+        <div class="modal-buttons">
+          <button id="consent-yes" class="consent-btn">I Consent</button>
+          <button id="consent-no" class="consent-btn">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recording Status -->
+    <div id="status-display" class="status-hidden">
+      <div class="status-content">
+        <div class="pulse-animation"></div>
+        <p id="status-text">Ready to record...</p>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
