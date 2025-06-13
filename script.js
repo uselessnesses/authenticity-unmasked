@@ -8,7 +8,46 @@ class VoiceRecorder {
     this.audioContext = null;
     this.stream = null;
 
+    // Initialize Microsoft Graph authentication
+    this.initializeMSAL();
+
     this.initializeApp();
+  }
+
+  initializeMSAL() {
+    try {
+      msalInstance = new msal.PublicClientApplication(msalConfig);
+      console.log("MSAL initialized successfully");
+    } catch (error) {
+      console.error("MSAL initialization failed:", error);
+    }
+  }
+
+  async getAccessToken() {
+    try {
+      // Try to get token silently first
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        const silentRequest = {
+          ...loginRequest,
+          account: accounts[0],
+        };
+
+        try {
+          const response = await msalInstance.acquireTokenSilent(silentRequest);
+          return response.accessToken;
+        } catch (silentError) {
+          console.log("Silent token acquisition failed, trying popup...");
+        }
+      }
+
+      // If silent fails, use popup
+      const response = await msalInstance.loginPopup(loginRequest);
+      return response.accessToken;
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      throw new Error("OneDrive authentication failed. Please try again.");
+    }
   }
 
   async initializeApp() {
@@ -205,25 +244,58 @@ class VoiceRecorder {
   }
 
   async saveToOneDrive(audioBlob, buttonId) {
-    // Create filename with timestamp and button ID
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `voice-recording-button-${buttonId}-${timestamp}.mp3`;
+    try {
+      this.showStatus("Authenticating with OneDrive...");
 
-    // For GitHub Pages deployment, we'll use Microsoft Graph API
-    // You'll need to set up Azure AD app registration and get access tokens
+      // Get access token
+      const accessToken = await this.getAccessToken();
 
-    // Placeholder for OneDrive integration
-    // In production, you would:
-    // 1. Get access token from Azure AD
-    // 2. Upload file to OneDrive using Microsoft Graph API
+      this.showStatus("Uploading to OneDrive...");
 
-    console.log("Saving to OneDrive:", filename, audioBlob.size, "bytes");
+      // Create filename with timestamp and button ID
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `voice-recording-button-${buttonId}-${timestamp}.mp3`;
 
-    // For demonstration, we'll create a download link
-    this.createDownloadLink(audioBlob, filename);
+      // Upload file directly to OneDrive using Microsoft Graph API
+      const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/Exhibition-Recordings/${filename}:/content`;
 
-    // Store recording metadata
-    this.storeRecordingMetadata(buttonId, filename, audioBlob.size);
+      const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "audio/mp3",
+        },
+        body: audioBlob,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Upload failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+      console.log("File uploaded to OneDrive successfully:", result);
+
+      // Store recording metadata
+      this.storeRecordingMetadata(
+        buttonId,
+        filename,
+        audioBlob.size,
+        result.webUrl
+      );
+    } catch (error) {
+      console.error("OneDrive upload failed:", error);
+
+      // Fallback: create download link for manual saving
+      this.showStatus(
+        "OneDrive upload failed. Downloading file locally...",
+        3000
+      );
+      this.createDownloadLink(audioBlob, filename);
+
+      throw error;
+    }
   }
 
   createDownloadLink(blob, filename) {
@@ -238,13 +310,15 @@ class VoiceRecorder {
     URL.revokeObjectURL(url);
   }
 
-  storeRecordingMetadata(buttonId, filename, fileSize) {
+  storeRecordingMetadata(buttonId, filename, fileSize, oneDriveUrl = null) {
     const recordings = JSON.parse(localStorage.getItem("recordings") || "[]");
     recordings.push({
       buttonId,
       filename,
       fileSize,
       timestamp: new Date().toISOString(),
+      oneDriveUrl,
+      uploaded: !!oneDriveUrl,
     });
     localStorage.setItem("recordings", JSON.stringify(recordings));
   }
@@ -277,9 +351,8 @@ class VoiceRecorder {
 
 // Microsoft Forms integration
 function openForms() {
-  // Replace with your actual Microsoft Forms URL
-  const formsUrl =
-    "https://forms.office.com/Pages/ResponsePage.aspx?id=YOUR_FORM_ID";
+  // Use the Forms URL from config
+  const formsUrl = window.AZURE_CONFIG.FORMS_URL;
   window.open(formsUrl, "_blank");
 }
 
@@ -301,3 +374,23 @@ if ("serviceWorker" in navigator) {
       });
   });
 }
+
+// Azure AD Configuration - using values from config.js
+const msalConfig = {
+  auth: {
+    clientId: window.AZURE_CONFIG.CLIENT_ID,
+    authority: "https://login.microsoftonline.com/common",
+    redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
+  },
+  cache: {
+    cacheLocation: "localStorage",
+    storeAuthStateInCookie: false,
+  },
+};
+
+const loginRequest = {
+  scopes: ["Files.ReadWrite", "User.Read"],
+};
+
+// Initialize MSAL instance
+let msalInstance;
