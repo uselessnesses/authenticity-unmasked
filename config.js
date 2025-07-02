@@ -16,9 +16,9 @@ const AZURE_CONFIG = {
     "https://forms.office.com/Pages/ResponsePage.aspx?id=YOUR_FORM_ID_HERE",
 
   // Version info - update this with each deployment
-  VERSION: "1.0.4", // Increment this manually for each push
-  BUILD_DATE: "2025-06-13",
-  BUILD_TIME: "19:15", // Add specific time for same-day deployments
+  VERSION: "2.1.1", // Enhanced mobile and tablet formatting
+  BUILD_DATE: "2025-07-02",
+  BUILD_TIME: "15:00", // Add specific time for same-day deployments
   COMMIT_HASH: "main", // You can update this with actual git commit hash
 };
 

@@ -20,6 +20,20 @@ class VoiceRecorder {
     this.hasConsent = false;
     this.audioContext = null;
     this.stream = null;
+    this.currentQuestionIndex = 0;
+    this.questions = [
+      "How has this exhibition influenced your perception of AI and its role in shaping authentic human experiences?",
+      "Do you feel more optimistic or more concerned about AI after experiencing this exhibition? Why?",
+      'What does "authenticity" mean to you in an age where AI can create art, music, and even mimic people?',
+      "Has the exhibition challenged or reinforced your previous beliefs about AI and its creative potential?",
+      "In what ways did the exhibition make you reflect on what is real versus what is generated or simulated?",
+      "What emotions did you feel while engaging with the exhibition? Awe, unease, curiosity, hope...?",
+      "Did any particular part of the exhibition make you question the boundaries between human and machine creativity?",
+      "Do you see a place for AI in your own creative or personal life after visiting this exhibition?",
+      'What, if anything, felt particularly "authentic" to you in the experience—despite the involvement of AI?',
+      "Do you think AI enhances or diminishes authenticity in art and culture? Why?",
+      "What questions are you leaving with that you didn't have before visiting this exhibition?",
+    ];
 
     // Initialize Microsoft Graph authentication
     this.initializeMSAL();
@@ -155,6 +169,9 @@ class VoiceRecorder {
     // Initialize recording buttons
     this.setupEventListeners();
 
+    // Load a random question
+    this.loadRandomQuestion();
+
     // Check for microphone permissions
     if (this.hasConsent) {
       await this.checkMicrophonePermissions();
@@ -183,10 +200,27 @@ class VoiceRecorder {
   }
 
   setupEventListeners() {
-    // Recording buttons
-    document.querySelectorAll(".record-btn").forEach((button) => {
-      button.addEventListener("click", (e) => this.handleRecordClick(e));
-    });
+    // Main recording button
+    const recordBtn = document.getElementById("main-record-btn");
+    if (recordBtn) {
+      recordBtn.addEventListener("click", (e) =>
+        this.showRecordingConfirmation(e)
+      );
+    }
+
+    // Recording confirmation modal buttons
+    document
+      .getElementById("confirm-recording")
+      ?.addEventListener("click", () => {
+        this.hideRecordingConfirmation();
+        this.handleRecordClick();
+      });
+
+    document
+      .getElementById("cancel-recording")
+      ?.addEventListener("click", () => {
+        this.hideRecordingConfirmation();
+      });
 
     // Prevent double-tap zoom on mobile
     document.addEventListener("touchstart", (e) => {
@@ -230,7 +264,7 @@ class VoiceRecorder {
     }
   }
 
-  async handleRecordClick(event) {
+  async handleRecordClick() {
     console.log("Button clicked, isRecording:", this.isRecording);
 
     if (!this.hasConsent) {
@@ -238,19 +272,19 @@ class VoiceRecorder {
       return;
     }
 
-    const button = event.currentTarget;
-    const buttonId = button.getAttribute("data-button-id");
+    const button = document.getElementById("main-record-btn");
+    const questionIndex = this.currentQuestionIndex; // Use current question index as ID
 
     console.log(
-      "Button ID:",
-      buttonId,
+      "Question Index:",
+      questionIndex,
       "Current recording state:",
       this.isRecording
     );
 
     if (!this.isRecording) {
       console.log("Starting recording...");
-      await this.startRecording(button, buttonId);
+      await this.startRecording(button, questionIndex);
     } else {
       console.log("Stopping recording...");
       await this.stopRecording();
@@ -443,6 +477,11 @@ class VoiceRecorder {
       await this.saveToOneDrive(mp3Blob, buttonId);
 
       this.showStatus("Recording saved successfully!", 3000);
+
+      // Move to next question after successful recording
+      setTimeout(() => {
+        this.moveToNextQuestion();
+      }, 2000);
     } catch (error) {
       console.error("Error processing recording:", error);
       this.showStatus(`Error: ${error.message}`, 5000);
@@ -459,7 +498,7 @@ class VoiceRecorder {
     return new Blob([audioBlob], { type: "audio/mp3" });
   }
 
-  async saveToOneDrive(audioBlob, buttonId) {
+  async saveToOneDrive(audioBlob, questionIndex) {
     try {
       this.showStatus("Authenticating with OneDrive...");
 
@@ -468,10 +507,20 @@ class VoiceRecorder {
 
       this.showStatus("Uploading to OneDrive...");
 
-      // Create filename with timestamp and button ID - add error checking
+      // Create filename with timestamp and question info
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const safeButtonId = buttonId || "unknown";
-      const filename = `voice-recording-button-${safeButtonId}-${timestamp}.mp3`;
+      const questionText = this.questions[questionIndex] || "unknown-question";
+
+      // Create a safe filename by removing special characters and limiting length
+      const safeQuestionText = questionText
+        .replace(/[^a-zA-Z0-9\s]/g, "") // Remove special chars except spaces
+        .replace(/\s+/g, "-") // Replace spaces with hyphens
+        .toLowerCase()
+        .substring(0, 50); // Limit length to 50 chars
+
+      const filename = `voice-recording-q${
+        questionIndex + 1
+      }-${safeQuestionText}-${timestamp}.mp3`;
 
       console.log("Creating filename:", filename);
 
@@ -498,18 +547,26 @@ class VoiceRecorder {
 
       // Store recording metadata
       this.storeRecordingMetadata(
-        buttonId,
+        questionIndex,
         filename,
         audioBlob.size,
-        result.webUrl
+        result.webUrl,
+        questionText
       );
     } catch (error) {
       console.error("OneDrive upload failed:", error);
 
       // Fallback: create download link for manual saving with safe filename
       const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const safeButtonId = buttonId || "unknown";
-      const fallbackFilename = `voice-recording-button-${safeButtonId}-${safeTimestamp}.mp3`;
+      const questionText = this.questions[questionIndex] || "unknown-question";
+      const safeQuestionText = questionText
+        .replace(/[^a-zA-Z0-9\s]/g, "")
+        .replace(/\s+/g, "-")
+        .toLowerCase()
+        .substring(0, 50);
+      const fallbackFilename = `voice-recording-q${
+        questionIndex + 1
+      }-${safeQuestionText}-${safeTimestamp}.mp3`;
 
       this.showStatus(
         "OneDrive upload failed. Downloading file locally...",
@@ -533,10 +590,17 @@ class VoiceRecorder {
     URL.revokeObjectURL(url);
   }
 
-  storeRecordingMetadata(buttonId, filename, fileSize, oneDriveUrl = null) {
+  storeRecordingMetadata(
+    questionIndex,
+    filename,
+    fileSize,
+    oneDriveUrl = null,
+    questionText = ""
+  ) {
     const recordings = JSON.parse(localStorage.getItem("recordings") || "[]");
     recordings.push({
-      buttonId,
+      questionIndex,
+      questionText,
       filename,
       fileSize,
       timestamp: new Date().toISOString(),
@@ -549,12 +613,12 @@ class VoiceRecorder {
   resetButton() {
     if (this.currentButton) {
       this.currentButton.classList.remove("recording");
-      const originalText = `Record Response ${this.currentButton.getAttribute(
-        "data-button-id"
-      )}`;
-      this.currentButton.querySelector(".btn-text").textContent = originalText;
+      this.currentButton.querySelector(".btn-text").textContent =
+        "Tap to Record Your Response";
       this.currentButton = null;
     }
+    this.isRecording = false;
+    this.audioChunks = [];
   }
 
   showStatus(message, duration = null) {
@@ -569,6 +633,49 @@ class VoiceRecorder {
         statusDisplay.classList.add("status-hidden");
       }, duration);
     }
+  }
+
+  loadRandomQuestion() {
+    // Shuffle questions if we've gone through all of them
+    if (this.currentQuestionIndex >= this.questions.length) {
+      this.currentQuestionIndex = 0;
+      this.shuffleQuestions();
+    }
+
+    const questionElement = document.getElementById("current-question");
+    if (questionElement) {
+      questionElement.textContent = this.questions[this.currentQuestionIndex];
+    }
+  }
+
+  shuffleQuestions() {
+    for (let i = this.questions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.questions[i], this.questions[j]] = [
+        this.questions[j],
+        this.questions[i],
+      ];
+    }
+  }
+
+  moveToNextQuestion() {
+    this.currentQuestionIndex++;
+    this.loadRandomQuestion();
+  }
+
+  showRecordingConfirmation(event) {
+    if (!this.hasConsent) {
+      this.showGDPRModal();
+      return;
+    }
+
+    const modal = document.getElementById("recording-confirmation-modal");
+    modal.style.display = "block";
+  }
+
+  hideRecordingConfirmation() {
+    const modal = document.getElementById("recording-confirmation-modal");
+    modal.style.display = "none";
   }
 }
 

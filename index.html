@@ -2,41 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>Voice Recording Interface</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Voice Recorder" />
+    <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
     <div class="container">
-      <div class="button-grid">
-        <button class="record-btn" data-button-id="1">
-          <span class="btn-text">Record Response 1</span>
-          <span class="recording-indicator"></span>
-        </button>
+      <div class="single-question-container">
+        <div class="question-display">
+          <h2 id="current-question">Loading question...</h2>
+        </div>
 
-        <button class="record-btn" data-button-id="2">
-          <span class="btn-text">Record Response 2</span>
-          <span class="recording-indicator"></span>
-        </button>
-
-        <button class="record-btn" data-button-id="3">
-          <span class="btn-text">Record Response 3</span>
-          <span class="recording-indicator"></span>
-        </button>
-
-        <button class="record-btn" data-button-id="4">
-          <span class="btn-text">Record Response 4</span>
+        <button class="record-btn" id="main-record-btn">
+          <span class="btn-text">Tap to Record Your Response</span>
           <span class="recording-indicator"></span>
         </button>
 
         <button class="forms-btn" onclick="openForms()">
           <span class="btn-text">Alternative Survey</span>
         </button>
+      </div>
+    </div>
+
+    <!-- Recording Confirmation Modal -->
+    <div id="recording-confirmation-modal" class="modal">
+      <div class="modal-content">
+        <h3>Voice Recording Consent</h3>
+        <p>
+          Are you sure you want to record your voice response? Your recording
+          will be stored securely for research purposes.
+        </p>
+        <div class="modal-buttons">
+          <button id="confirm-recording" class="consent-btn">
+            Yes, Record
+          </button>
+          <button id="cancel-recording" class="consent-btn">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -66,7 +80,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v1.0.3</span>
+      <span id="version-text">v2.1.1</span>
     </div>
 
     <!-- Microsoft Graph SDK -->
