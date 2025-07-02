@@ -20,7 +20,6 @@ class VoiceRecorder {
     this.hasConsent = false;
     this.audioContext = null;
     this.stream = null;
-    this.currentQuestionIndex = 0;
     this.questions = [
       "How has this exhibition influenced your perception of AI and its role in shaping authentic human experiences?",
       "Do you feel more optimistic or more concerned about AI after experiencing this exhibition? Why?",
@@ -34,6 +33,12 @@ class VoiceRecorder {
       "Do you think AI enhances or diminishes authenticity in art and culture? Why?",
       "What questions are you leaving with that you didn't have before visiting this exhibition?",
     ];
+
+    // Shuffle questions and pick a random starting question
+    this.shuffleQuestions();
+    this.currentQuestionIndex = Math.floor(
+      Math.random() * this.questions.length
+    );
 
     // Initialize Microsoft Graph authentication
     this.initializeMSAL();
@@ -203,9 +208,7 @@ class VoiceRecorder {
     // Main recording button
     const recordBtn = document.getElementById("main-record-btn");
     if (recordBtn) {
-      recordBtn.addEventListener("click", (e) =>
-        this.showRecordingConfirmation(e)
-      );
+      recordBtn.addEventListener("click", (e) => this.handleButtonClick(e));
     }
 
     // Recording confirmation modal buttons
@@ -288,6 +291,21 @@ class VoiceRecorder {
     } else {
       console.log("Stopping recording...");
       await this.stopRecording();
+    }
+  }
+
+  handleButtonClick(event) {
+    if (!this.hasConsent) {
+      this.showGDPRModal();
+      return;
+    }
+
+    // If currently recording, stop immediately without confirmation
+    if (this.isRecording) {
+      this.handleRecordClick();
+    } else {
+      // If not recording, show confirmation first
+      this.showRecordingConfirmation(event);
     }
   }
 
@@ -664,11 +682,6 @@ class VoiceRecorder {
   }
 
   showRecordingConfirmation(event) {
-    if (!this.hasConsent) {
-      this.showGDPRModal();
-      return;
-    }
-
     const modal = document.getElementById("recording-confirmation-modal");
     modal.style.display = "block";
   }
