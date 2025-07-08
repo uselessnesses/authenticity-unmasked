@@ -52,6 +52,8 @@ body {
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
+  position: relative;
+  overflow: hidden;
 }
 
 .question-display h2 {
@@ -63,6 +65,102 @@ body {
   text-align: center;
   word-wrap: break-word;
   hyphens: auto;
+  flex: 1;
+  padding-right: 60px;
+  transition: transform 0.4s ease-in-out;
+}
+
+.skip-btn {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 8px 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.skip-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.skip-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%) scale(0.95);
+}
+
+.skip-arrow {
+  font-size: 1rem;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.skip-btn:hover .skip-arrow {
+  transform: translateX(2px);
+}
+
+/* Touch-specific skip button styles */
+@media (hover: none) and (pointer: coarse) {
+  .skip-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%);
+  }
+
+  .skip-btn:hover .skip-arrow {
+    transform: none;
+  }
+
+  .skip-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-50%) scale(0.92);
+  }
+}
+
+/* Question transition animations */
+.question-slide-out-right {
+  animation: slideOutRight 0.4s ease-in-out forwards;
+}
+
+.question-slide-in-left {
+  animation: slideInLeft 0.4s ease-in-out forwards;
+}
+
+@keyframes slideOutRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .button-grid {
@@ -368,6 +466,21 @@ body {
   .question-display h2 {
     font-size: 1.3rem;
     line-height: 1.25;
+    padding-right: 50px;
+  }
+
+  .skip-btn {
+    right: 10px;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+
+  .skip-text {
+    display: none;
+  }
+
+  .skip-arrow {
+    font-size: 1.2rem;
   }
 
   .record-btn {
@@ -422,6 +535,12 @@ body {
   .question-display h2 {
     font-size: 1.15rem;
     line-height: 1.2;
+    padding-right: 45px;
+  }
+
+  .skip-btn {
+    right: 8px;
+    padding: 5px 8px;
   }
 
   .record-btn {
@@ -450,6 +569,7 @@ body {
   .question-display h2 {
     font-size: 1.1rem;
     line-height: 1.2;
+    padding-right: 40px;
   }
 
   .record-btn {

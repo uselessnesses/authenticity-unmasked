@@ -225,6 +225,13 @@ class VoiceRecorder {
         this.hideRecordingConfirmation();
       });
 
+    // Skip question button
+    document
+      .getElementById("skip-question-btn")
+      ?.addEventListener("click", () => {
+        this.skipQuestion();
+      });
+
     // Prevent double-tap zoom on mobile
     document.addEventListener("touchstart", (e) => {
       if (e.touches.length > 1) {
@@ -499,6 +506,7 @@ class VoiceRecorder {
       // Move to next question after successful recording
       setTimeout(() => {
         this.moveToNextQuestion();
+        this.loadRandomQuestion(true);
       }, 2000);
     } catch (error) {
       console.error("Error processing recording:", error);
@@ -653,7 +661,7 @@ class VoiceRecorder {
     }
   }
 
-  loadRandomQuestion() {
+  loadRandomQuestion(animated = false) {
     // Shuffle questions if we've gone through all of them
     if (this.currentQuestionIndex >= this.questions.length) {
       this.currentQuestionIndex = 0;
@@ -662,6 +670,16 @@ class VoiceRecorder {
 
     const questionElement = document.getElementById("current-question");
     if (questionElement) {
+      if (animated) {
+        // Add slide-in animation
+        questionElement.classList.add("question-slide-in-left");
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+          questionElement.classList.remove("question-slide-in-left");
+        }, 400);
+      }
+
       questionElement.textContent = this.questions[this.currentQuestionIndex];
     }
   }
@@ -678,7 +696,6 @@ class VoiceRecorder {
 
   moveToNextQuestion() {
     this.currentQuestionIndex++;
-    this.loadRandomQuestion();
   }
 
   showRecordingConfirmation(event) {
@@ -689,6 +706,27 @@ class VoiceRecorder {
   hideRecordingConfirmation() {
     const modal = document.getElementById("recording-confirmation-modal");
     modal.style.display = "none";
+  }
+
+  skipQuestion() {
+    // Prevent skipping during recording
+    if (this.isRecording) {
+      this.showStatus("Cannot skip question while recording", 2000);
+      return;
+    }
+
+    const questionElement = document.getElementById("current-question");
+    if (questionElement) {
+      // Add slide-out animation
+      questionElement.classList.add("question-slide-out-right");
+
+      // After slide-out completes, load new question with slide-in
+      setTimeout(() => {
+        questionElement.classList.remove("question-slide-out-right");
+        this.moveToNextQuestion();
+        this.loadRandomQuestion(true);
+      }, 400);
+    }
   }
 }
 
