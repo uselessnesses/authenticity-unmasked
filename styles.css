@@ -48,12 +48,13 @@ body {
   min-height: 100px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
+  gap: 20px;
 }
 
 .question-display h2 {
@@ -66,15 +67,10 @@ body {
   word-wrap: break-word;
   hyphens: auto;
   flex: 1;
-  padding-right: 60px;
   transition: transform 0.4s ease-in-out;
 }
 
 .skip-btn {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
@@ -91,17 +87,18 @@ body {
   letter-spacing: 0.5px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .skip-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-50%) translateX(-2px);
+  transform: translateX(-2px);
 }
 
 .skip-btn:active {
   background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-50%) scale(0.95);
+  transform: scale(0.95);
 }
 
 .skip-arrow {
@@ -119,7 +116,7 @@ body {
   .skip-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%);
+    transform: none;
   }
 
   .skip-btn:hover .skip-arrow {
@@ -128,7 +125,7 @@ body {
 
   .skip-btn:active {
     background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%) scale(0.92);
+    transform: scale(0.92);
   }
 }
 
@@ -197,6 +194,8 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  gap: 8px;
 }
 
 .record-btn:hover {
@@ -280,6 +279,11 @@ body {
 .btn-text {
   display: block;
   text-align: center;
+  line-height: 1.2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Modal Styles */
@@ -461,18 +465,20 @@ body {
     padding: 20px 15px;
     min-height: 90px;
     max-width: 100%;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
   }
 
   .question-display h2 {
     font-size: 1.3rem;
     line-height: 1.25;
-    padding-right: 50px;
   }
 
   .skip-btn {
-    right: 10px;
     padding: 6px 10px;
     font-size: 0.7rem;
+    position: static;
   }
 
   .skip-text {
@@ -530,16 +536,16 @@ body {
   .question-display {
     padding: 15px 12px;
     min-height: 80px;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .question-display h2 {
     font-size: 1.15rem;
     line-height: 1.2;
-    padding-right: 45px;
   }
 
   .skip-btn {
-    right: 8px;
     padding: 5px 8px;
   }
 
@@ -564,12 +570,13 @@ body {
   .question-display {
     padding: 15px;
     min-height: 70px;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .question-display h2 {
     font-size: 1.1rem;
     line-height: 1.2;
-    padding-right: 40px;
   }
 
   .record-btn {
