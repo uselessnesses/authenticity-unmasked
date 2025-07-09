@@ -89,5 +89,36 @@
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
+    <script>
+      // --- GitHub Commit Info Display ---
+      (function () {
+        const username = "uselessnesses"; // CHANGE to your GitHub username
+        const repo = "authenticity-unmasked"; // CHANGE to your repo name
+        const branch = "main";
+        const versionDisplay = document.getElementById("version-display");
+        const versionText = document.getElementById("version-text");
+        if (!versionDisplay || !versionText) return;
+
+        fetch(
+          `https://api.github.com/repos/${username}/${repo}/commits/${branch}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.sha && data.commit && data.commit.message) {
+              const shortSha = data.sha.substring(0, 7);
+              const msg = data.commit.message.split("\n")[0];
+              versionText.textContent = `v${
+                window.AZURE_CONFIG?.VERSION || ""
+              } (${shortSha})`;
+              const msgDiv = document.createElement("div");
+              msgDiv.style.fontSize = "0.75em";
+              msgDiv.style.opacity = "0.8";
+              msgDiv.textContent = msg;
+              versionDisplay.appendChild(msgDiv);
+            }
+          })
+          .catch(() => {});
+      })();
+    </script>
   </body>
 </html>
