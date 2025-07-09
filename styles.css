@@ -476,7 +476,7 @@ body {
   }
 
   .question-and-skip-container {
-    flex-direction: column;
+    flex-direction: row;
     gap: 15px;
     flex: 1;
     max-width: 60%;

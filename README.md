@@ -16,7 +16,7 @@ A streamlined, GDPR-compliant voice recording interface for exhibition touchscre
 
 ### 1. Microsoft Forms Setup
 
-1. Create a new Microsoft Form at https://forms.office.com
+1. Create a new Microsoft Form at [https://forms.office.com](https://forms.office.com)
 2. Copy the form URL
 3. Replace `YOUR_FORM_ID` in `script.js` with your actual form URL
 
