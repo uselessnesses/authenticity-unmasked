@@ -466,13 +466,17 @@ body {
   }
 
   .single-question-container {
-    gap: 25px;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
     padding: 0 5px;
   }
 
   .question-and-skip-container {
     flex-direction: column;
     gap: 15px;
+    flex: 1;
+    max-width: 60%;
   }
 
   .question-display {
@@ -500,10 +504,11 @@ body {
   }
 
   .record-btn {
-    min-height: 80px;
+    min-height: 120px;
     font-size: 1.1rem;
-    max-width: none;
+    max-width: 200px;
     padding: 15px;
+    flex-shrink: 0;
   }
 
   .modal-content {
@@ -540,11 +545,12 @@ body {
 /* Small mobile devices */
 @media (max-width: 480px) {
   .single-question-container {
-    gap: 20px;
+    gap: 15px;
   }
 
   .question-and-skip-container {
     gap: 12px;
+    max-width: 65%;
   }
 
   .question-display {
@@ -562,9 +568,10 @@ body {
   }
 
   .record-btn {
-    min-height: 70px;
+    min-height: 100px;
     font-size: 1rem;
     padding: 12px;
+    max-width: 140px;
   }
 
   .modal-content {
@@ -612,9 +619,20 @@ body {
 
 /* Tablet optimizations */
 @media (min-width: 769px) and (max-width: 1024px) {
+  .single-question-container {
+    flex-direction: row;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .question-and-skip-container {
+    flex: 1;
+    max-width: 65%;
+  }
+
   .question-display {
     padding: 30px 25px;
-    max-width: 90%;
+    max-width: 100%;
   }
 
   .question-display h2 {
@@ -622,8 +640,9 @@ body {
   }
 
   .record-btn {
-    min-height: 90px;
+    min-height: 120px;
     font-size: 1.2rem;
-    max-width: 400px;
+    max-width: 250px;
+    flex-shrink: 0;
   }
 }
