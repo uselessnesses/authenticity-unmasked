@@ -17,9 +17,9 @@ const AZURE_CONFIG = {
 
   // Version info - update this with each deployment
   VERSION: "2.3.0", // Added skip question functionality with slide animations
-  BUILD_DATE: "2025-07-08",
+  BUILD_DATE: "2025-07-09", // Updated date
   BUILD_TIME: "16:00", // Add specific time for same-day deployments
-  COMMIT_HASH: "main", // You can update this with actual git commit hash
+  COMMIT_HASH: "a1b2c3d", // Manually update this with actual git commit hash
 };
 
 // Export for use in main script

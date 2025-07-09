@@ -91,35 +91,74 @@
     <script src="script.js"></script>
     <script>
       // --- GitHub Commit Info Display ---
-      (function () {
+      document.addEventListener("DOMContentLoaded", function () {
+        // TODO: Update these with your actual GitHub details when you create the repo
         const username = "uselessnesses"; // CHANGE to your GitHub username
         const repo = "authenticity-unmasked"; // CHANGE to your repo name
         const branch = "main";
         const versionDisplay = document.getElementById("version-display");
         const versionText = document.getElementById("version-text");
+
         if (!versionDisplay || !versionText) return;
 
+        // Ensure AZURE_CONFIG is available
+        const version = window.AZURE_CONFIG?.VERSION || "2.3.0";
+        const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
+        const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
+
+        // Always show version first
+        versionText.textContent = `v${version}`;
+
+        // Add build info
+        if (buildDate) {
+          const buildInfo = document.createElement("div");
+          buildInfo.style.fontSize = "0.7em";
+          buildInfo.style.opacity = "0.7";
+          buildInfo.style.marginTop = "2px";
+          buildInfo.textContent = `Built: ${buildDate}${
+            buildTime ? ` ${buildTime}` : ""
+          }`;
+          versionDisplay.appendChild(buildInfo);
+        }
+
+        // Try to fetch GitHub commit info
         fetch(
           `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
         )
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+          })
           .then((data) => {
             const commit = Array.isArray(data) ? data[0] : null;
-            if (commit && commit.sha && commit.commit && commit.commit.message) {
+            if (
+              commit &&
+              commit.sha &&
+              commit.commit &&
+              commit.commit.message
+            ) {
               const shortSha = commit.sha.substring(0, 7);
               const msg = commit.commit.message.split("\n")[0];
-              versionText.textContent = `v${
-                window.AZURE_CONFIG?.VERSION || ""
-              } (${shortSha})`;
+
+              // Update version text to include commit
+              versionText.textContent = `v${version} (${shortSha})`;
+
+              // Add commit message
               const msgDiv = document.createElement("div");
               msgDiv.style.fontSize = "0.75em";
               msgDiv.style.opacity = "0.8";
+              msgDiv.style.marginTop = "2px";
               msgDiv.textContent = msg;
               versionDisplay.appendChild(msgDiv);
             }
           })
-          .catch(() => {});
-      })();
+          .catch((error) => {
+            console.log("GitHub API unavailable:", error.message);
+            // Keep showing version + build info (already added above)
+          });
+      });
     </script>
   </body>
 </html>
