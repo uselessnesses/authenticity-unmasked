@@ -133,19 +133,25 @@ Users can install the app on their mobile devices:
 ## Customization
 
 ### Button Labels
+
 Edit the button text in `index.html`:
+
 ```html
 <span class="btn-text">Your Custom Text</span>
 ```
 
 ### Styling
+
 Modify colors and layout in `styles.css`. The current design uses:
+
 - Background: Black (#000)
 - Buttons: White (#fff) with black text
 - Recording state: Red (#ff4444)
 
 ### Recording Settings
+
 Adjust audio quality in `script.js`:
+
 ```javascript
 audio: {
   echoCancellation: true,
@@ -165,7 +171,9 @@ audio: {
 ## Support
 
 For issues with:
+
 - **Recording functionality**: Check browser permissions and HTTPS
+
 - **OneDrive integration**: Verify Azure AD setup and permissions
 - **Mobile compatibility**: Test PWA installation process
 - **GDPR compliance**: Review consent flow and data handling
