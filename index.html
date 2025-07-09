@@ -106,22 +106,7 @@
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 
-        // Always show version first
-        versionText.textContent = `v${version}`;
-
-        // Add build info
-        if (buildDate) {
-          const buildInfo = document.createElement("div");
-          buildInfo.style.fontSize = "0.7em";
-          buildInfo.style.opacity = "0.7";
-          buildInfo.style.marginTop = "2px";
-          buildInfo.textContent = `Built: ${buildDate}${
-            buildTime ? ` ${buildTime}` : ""
-          }`;
-          versionDisplay.appendChild(buildInfo);
-        }
-
-        // Try to fetch GitHub commit info
+        // Try to fetch GitHub commit info first
         fetch(
           `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
         )
@@ -137,26 +122,43 @@
               commit &&
               commit.sha &&
               commit.commit &&
-              commit.commit.message
+              commit.commit.message &&
+              commit.commit.author &&
+              commit.commit.author.date
             ) {
-              const shortSha = commit.sha.substring(0, 7);
+              // Parse the commit date
+              const commitDate = new Date(commit.commit.author.date);
+              const publishDate = commitDate
+                .toLocaleDateString("en-GB", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                })
+                .replace(/\//g, "-"); // Format: DD-MM-YYYY
+
+              const publishTime = commitDate.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              }); // Format: HH:MM
+
               const msg = commit.commit.message.split("\n")[0];
 
-              // Update version text to include commit
-              versionText.textContent = `v${version} (${shortSha})`;
-
-              // Add commit message
-              const msgDiv = document.createElement("div");
-              msgDiv.style.fontSize = "0.75em";
-              msgDiv.style.opacity = "0.8";
-              msgDiv.style.marginTop = "2px";
-              msgDiv.textContent = msg;
-              versionDisplay.appendChild(msgDiv);
+              // Set the format: "version number, date of publish, time of publish, commit message"
+              versionText.textContent = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
+            } else {
+              // Fallback to config data if GitHub data is incomplete
+              versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
+                buildTime || "N/A"
+              }, Built locally`;
             }
           })
           .catch((error) => {
             console.log("GitHub API unavailable:", error.message);
-            // Keep showing version + build info (already added above)
+            // Fallback to config data with same format
+            versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
+              buildTime || "N/A"
+            }, Built locally`;
           });
       });
     </script>
