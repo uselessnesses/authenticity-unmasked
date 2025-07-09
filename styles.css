@@ -40,7 +40,11 @@ body {
 }
 
 .question-and-skip-container {
-  display: contents;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
 }
 
 .question-display {
@@ -71,7 +75,6 @@ body {
   hyphens: auto;
   flex: 1;
   transition: transform 0.4s ease-in-out;
-  padding-right: 60px;
 }
 
 .skip-btn {
@@ -92,21 +95,17 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .skip-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-50%) translateX(-2px);
+  transform: translateX(-2px);
 }
 
 .skip-btn:active {
   background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-50%) scale(0.95);
+  transform: scale(0.95);
 }
 
 .skip-arrow {
@@ -124,7 +123,7 @@ body {
   .skip-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%);
+    transform: none;
   }
 
   .skip-btn:hover .skip-arrow {
@@ -133,7 +132,7 @@ body {
 
   .skip-btn:active {
     background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%) scale(0.92);
+    transform: scale(0.92);
   }
 }
 
@@ -471,6 +470,11 @@ body {
     padding: 0 5px;
   }
 
+  .question-and-skip-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+
   .question-display {
     padding: 20px 15px;
     min-height: 90px;
@@ -480,13 +484,11 @@ body {
   .question-display h2 {
     font-size: 1.3rem;
     line-height: 1.25;
-    padding-right: 50px;
   }
 
   .skip-btn {
     padding: 6px 10px;
     font-size: 0.7rem;
-    right: 10px;
   }
 
   .skip-text {
@@ -541,6 +543,10 @@ body {
     gap: 20px;
   }
 
+  .question-and-skip-container {
+    gap: 12px;
+  }
+
   .question-display {
     padding: 15px 12px;
     min-height: 80px;
@@ -549,12 +555,10 @@ body {
   .question-display h2 {
     font-size: 1.15rem;
     line-height: 1.2;
-    padding-right: 45px;
   }
 
   .skip-btn {
     padding: 5px 8px;
-    right: 8px;
   }
 
   .record-btn {
@@ -575,6 +579,11 @@ body {
     justify-content: space-around;
   }
 
+  .question-and-skip-container {
+    flex-direction: row;
+    gap: 15px;
+  }
+
   .question-display {
     padding: 15px;
     min-height: 70px;
@@ -583,7 +592,6 @@ body {
   .question-display h2 {
     font-size: 1.1rem;
     line-height: 1.2;
-    padding-right: 40px;
   }
 
   .record-btn {
@@ -617,39 +625,5 @@ body {
     min-height: 90px;
     font-size: 1.2rem;
     max-width: 400px;
-  }
-}
-
-/* Desktop/Laptop optimizations - Skip button outside question display */
-@media (min-width: 1025px) {
-  .question-and-skip-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-  }
-
-  .question-display {
-    margin: 0;
-    position: static;
-  }
-
-  .question-display h2 {
-    padding-right: 0;
-  }
-
-  .skip-btn {
-    position: static;
-    transform: none;
-    align-self: center;
-  }
-
-  .skip-btn:hover {
-    transform: translateX(-2px);
-  }
-
-  .skip-btn:active {
-    transform: scale(0.95);
   }
 }
