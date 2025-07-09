@@ -100,13 +100,14 @@
         if (!versionDisplay || !versionText) return;
 
         fetch(
-          `https://api.github.com/repos/${username}/${repo}/commits/${branch}`
+          `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
         )
           .then((res) => res.json())
           .then((data) => {
-            if (data && data.sha && data.commit && data.commit.message) {
-              const shortSha = data.sha.substring(0, 7);
-              const msg = data.commit.message.split("\n")[0];
+            const commit = Array.isArray(data) ? data[0] : null;
+            if (commit && commit.sha && commit.commit && commit.commit.message) {
+              const shortSha = commit.sha.substring(0, 7);
+              const msg = commit.commit.message.split("\n")[0];
               versionText.textContent = `v${
                 window.AZURE_CONFIG?.VERSION || ""
               } (${shortSha})`;
