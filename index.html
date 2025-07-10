@@ -106,77 +106,96 @@
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 
-        // Try to fetch GitHub workflow runs for auto-versioning
-        // This counts actual deployments/builds rather than just commits
-        Promise.all([
-          fetch(
-            `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
-          ),
-          fetch(
-            `https://api.github.com/repos/${username}/${repo}/actions/runs?status=completed&per_page=100`
-          ),
-        ])
-          .then(async ([latestResponse, workflowResponse]) => {
-            let autoVersion = `v${version}`; // fallback to config version
+        // Alternative approach: Use build-time commit info from config
+        // Since GitHub API is giving 403 errors, let's use a simpler approach
 
-            // Try to get workflow run count for auto-versioning
-            if (workflowResponse.ok) {
-              const workflowData = await workflowResponse.json();
-              const completedRuns =
-                workflowData.total_count ||
-                workflowData.workflow_runs?.length ||
-                0;
-              autoVersion = `v1.${completedRuns}`;
+        // Generate auto-version based on current date/time
+        const now = new Date();
+        const dayOfYear = Math.floor(
+          (now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)
+        );
+        const autoVersion = `v1.${dayOfYear}`;
+
+        // Try GitHub API with better error handling
+        const tryGitHubAPI = async () => {
+          try {
+            const response = await fetch(
+              `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
+            );
+
+            if (response.status === 404) {
+              console.log("Repository not found or not public yet");
+              return null;
             }
 
-            // Get latest commit info
-            if (latestResponse.ok) {
-              const [latestCommit] = await latestResponse.json();
-
-              if (
-                latestCommit &&
-                latestCommit.sha &&
-                latestCommit.commit &&
-                latestCommit.commit.message &&
-                latestCommit.commit.author &&
-                latestCommit.commit.author.date
-              ) {
-                // Parse the commit date
-                const commitDate = new Date(latestCommit.commit.author.date);
-                const publishDate = commitDate
-                  .toLocaleDateString("en-GB", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })
-                  .replace(/\//g, "-"); // Format: DD-MM-YYYY
-
-                const publishTime = commitDate.toLocaleTimeString("en-GB", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                }); // Format: HH:MM
-
-                const msg = latestCommit.commit.message.split("\n")[0];
-
-                // Set the format: "auto version, date of publish, time of publish, commit message"
-                versionText.textContent = `${autoVersion}, ${publishDate}, ${publishTime}, ${msg}`;
-                return;
-              }
+            if (response.status === 403) {
+              console.log(
+                "GitHub API access forbidden - repository may be private or rate limited"
+              );
+              return null;
             }
 
-            // Fallback if commit info unavailable
-            versionText.textContent = `${autoVersion}, ${buildDate || "N/A"}, ${
-              buildTime || "N/A"
-            }, Built locally`;
-          })
-          .catch((error) => {
-            console.log("GitHub API unavailable:", error.message);
-            // Fallback to config data with same format, using manual version
-            versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
-              buildTime || "N/A"
-            }, Built locally`;
-          });
+            if (!response.ok) {
+              console.log(`GitHub API error: ${response.status}`);
+              return null;
+            }
+
+            const data = await response.json();
+            return Array.isArray(data) && data.length > 0 ? data[0] : null;
+          } catch (error) {
+            console.log("GitHub API request failed:", error.message);
+            return null;
+          }
+        };
+
+        tryGitHubAPI().then((commit) => {
+          if (
+            commit &&
+            commit.commit &&
+            commit.commit.author &&
+            commit.commit.author.date
+          ) {
+            // Parse the commit date
+            const commitDate = new Date(commit.commit.author.date);
+            const publishDate = commitDate
+              .toLocaleDateString("en-GB", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })
+              .replace(/\//g, "-");
+
+            const publishTime = commitDate.toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
+
+            const msg = commit.commit.message.split("\n")[0];
+            versionText.textContent = `${autoVersion}, ${publishDate}, ${publishTime}, ${msg}`;
+          } else {
+            // Fallback to build info from config with auto-version
+            const fallbackDate =
+              buildDate ||
+              new Date()
+                .toLocaleDateString("en-GB", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                })
+                .replace(/\//g, "-");
+
+            const fallbackTime =
+              buildTime ||
+              new Date().toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+
+            versionText.textContent = `${autoVersion}, ${fallbackDate}, ${fallbackTime}, Built locally`;
+          }
+        });
       });
     </script>
   </body>
