@@ -102,100 +102,63 @@
         if (!versionDisplay || !versionText) return;
 
         // Ensure AZURE_CONFIG is available
-        const version = window.AZURE_CONFIG?.VERSION || "2.3.0";
+        const version = window.AZURE_CONFIG?.VERSION || "2.4.0";
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 
-        // Alternative approach: Use build-time commit info from config
-        // Since GitHub API is giving 403 errors, let's use a simpler approach
-
-        // Generate auto-version based on current date/time
-        const now = new Date();
-        const dayOfYear = Math.floor(
-          (now - new Date(now.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)
-        );
-        const autoVersion = `v1.${dayOfYear}`;
-
-        // Try GitHub API with better error handling
-        const tryGitHubAPI = async () => {
-          try {
-            const response = await fetch(
-              `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
-            );
-
-            if (response.status === 404) {
-              console.log("Repository not found or not public yet");
-              return null;
-            }
-
-            if (response.status === 403) {
-              console.log(
-                "GitHub API access forbidden - repository may be private or rate limited"
-              );
-              return null;
-            }
-
+        // Try to fetch GitHub commit info
+        fetch(
+          `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
+        )
+          .then((response) => {
             if (!response.ok) {
-              console.log(`GitHub API error: ${response.status}`);
-              return null;
+              throw new Error(`HTTP ${response.status}`);
             }
+            return response.json();
+          })
+          .then((data) => {
+            const commit =
+              Array.isArray(data) && data.length > 0 ? data[0] : null;
 
-            const data = await response.json();
-            return Array.isArray(data) && data.length > 0 ? data[0] : null;
-          } catch (error) {
-            console.log("GitHub API request failed:", error.message);
-            return null;
-          }
-        };
-
-        tryGitHubAPI().then((commit) => {
-          if (
-            commit &&
-            commit.commit &&
-            commit.commit.author &&
-            commit.commit.author.date
-          ) {
-            // Parse the commit date
-            const commitDate = new Date(commit.commit.author.date);
-            const publishDate = commitDate
-              .toLocaleDateString("en-GB", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              })
-              .replace(/\//g, "-");
-
-            const publishTime = commitDate.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            });
-
-            const msg = commit.commit.message.split("\n")[0];
-            versionText.textContent = `${autoVersion}, ${publishDate}, ${publishTime}, ${msg}`;
-          } else {
-            // Fallback to build info from config with auto-version
-            const fallbackDate =
-              buildDate ||
-              new Date()
+            if (
+              commit &&
+              commit.commit &&
+              commit.commit.author &&
+              commit.commit.author.date
+            ) {
+              // Parse the commit date
+              const commitDate = new Date(commit.commit.author.date);
+              const publishDate = commitDate
                 .toLocaleDateString("en-GB", {
-                  year: "numeric",
                   month: "2-digit",
                   day: "2-digit",
                 })
                 .replace(/\//g, "-");
 
-            const fallbackTime =
-              buildTime ||
-              new Date().toLocaleTimeString("en-GB", {
+              const publishTime = commitDate.toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
               });
 
-            versionText.textContent = `${autoVersion}, ${fallbackDate}, ${fallbackTime}, Built locally`;
-          }
-        });
+              const msg = commit.commit.message.split("\n")[0];
+
+              // Set the format: "version, date of publish, time of publish, commit message"
+              versionText.textContent = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
+            } else {
+              // Fallback to config data
+              versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
+                buildTime || "N/A"
+              }, Built locally`;
+            }
+          })
+          .catch((error) => {
+            console.log("GitHub API unavailable:", error.message);
+            // Fallback to config data with same format
+            versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
+              buildTime || "N/A"
+            }, Built locally`;
+          });
       });
     </script>
   </body>
