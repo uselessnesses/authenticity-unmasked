@@ -34,7 +34,7 @@ body {
   justify-content: center;
   width: 100%;
   max-width: 800px;
-  height: 100%;
+  /* height: 100%; */
   text-align: center;
   gap: 30px;
 }
@@ -469,8 +469,6 @@ body {
   }
 
   .single-question-container {
-    flex-direction: row;
-    align-items: center;
     gap: 20px;
     padding: 0 5px;
   }
@@ -631,8 +629,6 @@ body {
 /* Tablet optimizations */
 @media (min-width: 769px) and (max-width: 1024px) {
   .single-question-container {
-    flex-direction: row;
-    align-items: center;
     gap: 30px;
   }
 
