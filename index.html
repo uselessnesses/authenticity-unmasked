@@ -106,56 +106,73 @@
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 
-        // Try to fetch GitHub commit info first
-        fetch(
-          `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
-        )
-          .then((res) => {
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        // Try to fetch GitHub workflow runs for auto-versioning
+        // This counts actual deployments/builds rather than just commits
+        Promise.all([
+          fetch(
+            `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
+          ),
+          fetch(
+            `https://api.github.com/repos/${username}/${repo}/actions/runs?status=completed&per_page=100`
+          ),
+        ])
+          .then(async ([latestResponse, workflowResponse]) => {
+            let autoVersion = `v${version}`; // fallback to config version
+
+            // Try to get workflow run count for auto-versioning
+            if (workflowResponse.ok) {
+              const workflowData = await workflowResponse.json();
+              const completedRuns =
+                workflowData.total_count ||
+                workflowData.workflow_runs?.length ||
+                0;
+              autoVersion = `v1.${completedRuns}`;
             }
-            return res.json();
-          })
-          .then((data) => {
-            const commit = Array.isArray(data) ? data[0] : null;
-            if (
-              commit &&
-              commit.sha &&
-              commit.commit &&
-              commit.commit.message &&
-              commit.commit.author &&
-              commit.commit.author.date
-            ) {
-              // Parse the commit date
-              const commitDate = new Date(commit.commit.author.date);
-              const publishDate = commitDate
-                .toLocaleDateString("en-GB", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                })
-                .replace(/\//g, "-"); // Format: DD-MM-YYYY
 
-              const publishTime = commitDate.toLocaleTimeString("en-GB", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              }); // Format: HH:MM
+            // Get latest commit info
+            if (latestResponse.ok) {
+              const [latestCommit] = await latestResponse.json();
 
-              const msg = commit.commit.message.split("\n")[0];
+              if (
+                latestCommit &&
+                latestCommit.sha &&
+                latestCommit.commit &&
+                latestCommit.commit.message &&
+                latestCommit.commit.author &&
+                latestCommit.commit.author.date
+              ) {
+                // Parse the commit date
+                const commitDate = new Date(latestCommit.commit.author.date);
+                const publishDate = commitDate
+                  .toLocaleDateString("en-GB", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })
+                  .replace(/\//g, "-"); // Format: DD-MM-YYYY
 
-              // Set the format: "version number, date of publish, time of publish, commit message"
-              versionText.textContent = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
-            } else {
-              // Fallback to config data if GitHub data is incomplete
-              versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
-                buildTime || "N/A"
-              }, Built locally`;
+                const publishTime = commitDate.toLocaleTimeString("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }); // Format: HH:MM
+
+                const msg = latestCommit.commit.message.split("\n")[0];
+
+                // Set the format: "auto version, date of publish, time of publish, commit message"
+                versionText.textContent = `${autoVersion}, ${publishDate}, ${publishTime}, ${msg}`;
+                return;
+              }
             }
+
+            // Fallback if commit info unavailable
+            versionText.textContent = `${autoVersion}, ${buildDate || "N/A"}, ${
+              buildTime || "N/A"
+            }, Built locally`;
           })
           .catch((error) => {
             console.log("GitHub API unavailable:", error.message);
-            // Fallback to config data with same format
+            // Fallback to config data with same format, using manual version
             versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
               buildTime || "N/A"
             }, Built locally`;
