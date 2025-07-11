@@ -328,6 +328,9 @@ body {
 .modal-content.consent-modal {
   max-width: 600px;
   text-align: left;
+  background-color: #000;
+  color: #fff;
+  border: 4px solid #fff;
 }
 
 .consent-text {
@@ -352,12 +355,13 @@ body {
 }
 
 .consent-text a {
-  color: #0066cc;
+  color: #66ccff;
   text-decoration: none;
 }
 
 .consent-text a:hover {
   text-decoration: underline;
+  color: #99ddff;
 }
 
 .modal-content h3 {
@@ -386,8 +390,8 @@ body {
 }
 
 .consent-btn {
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
   border: none;
   padding: 15px 30px;
   border-radius: 8px;
@@ -403,7 +407,7 @@ body {
 }
 
 .consent-btn:hover {
-  background: #333;
+  background: #f0f0f0;
   transform: translateY(-1px);
 }
 
@@ -414,18 +418,23 @@ body {
 /* Touch-specific consent button styles */
 @media (hover: none) and (pointer: coarse) {
   .consent-btn:hover {
-    background: #000;
+    background: #fff;
     transform: none;
   }
 
   .consent-btn:active {
-    background: #333;
+    background: #f0f0f0;
     transform: scale(0.95);
   }
 }
 
 #consent-no {
-  background: #666;
+  background: #333;
+  color: #fff;
+}
+
+#consent-no:hover {
+  background: #555;
 }
 
 #consent-no:hover {
@@ -702,4 +711,17 @@ body {
     max-width: 250px;
     flex-shrink: 0;
   }
+}
+
+/* Disabled button styles */
+.record-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.skip-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
 }

@@ -178,6 +178,13 @@ class VoiceRecorder {
 
   showGDPRModal() {
     const modal = document.getElementById("gdpr-modal");
+    const modalContent = modal.querySelector(".modal-content");
+
+    // Reset scroll position to top
+    if (modalContent) {
+      modalContent.scrollTop = 0;
+    }
+
     modal.style.display = "block";
 
     document.getElementById("consent-yes").onclick = () => {
@@ -236,27 +243,35 @@ class VoiceRecorder {
     };
   }
 
+  showRecordingConsent() {
+    const modal = document.getElementById("gdpr-modal");
+    const modalContent = modal.querySelector(".modal-content");
+
+    // Reset scroll position to top
+    if (modalContent) {
+      modalContent.scrollTop = 0;
+    }
+
+    modal.style.display = "block";
+
+    document.getElementById("consent-yes").onclick = () => {
+      this.hasRecordingConsent = true;
+      modal.style.display = "none";
+      this.handleRecordClick();
+    };
+
+    document.getElementById("consent-no").onclick = () => {
+      modal.style.display = "none";
+      // Don't set hasRecordingConsent to false, just cancel this recording attempt
+    };
+  }
+
   setupEventListeners() {
     // Main recording button
     const recordBtn = document.getElementById("main-record-btn");
     if (recordBtn) {
       recordBtn.addEventListener("click", (e) => this.handleButtonClick(e));
     }
-
-    // Recording confirmation modal buttons
-    document
-      .getElementById("confirm-recording")
-      ?.addEventListener("click", () => {
-        this.hideRecordingConfirmation();
-        this.hasRecordingConsent = true;
-        this.handleRecordClick();
-      });
-
-    document
-      .getElementById("cancel-recording")
-      ?.addEventListener("click", () => {
-        this.hideRecordingConfirmation();
-      });
 
     // Continue modal buttons
     document.getElementById("continue-yes")?.addEventListener("click", () => {
@@ -347,6 +362,11 @@ class VoiceRecorder {
   }
 
   handleButtonClick(event) {
+    // Prevent action if button is disabled
+    if (event.target.disabled) {
+      return;
+    }
+
     if (!this.hasConsent) {
       this.showGDPRModal();
       return;
@@ -358,7 +378,7 @@ class VoiceRecorder {
     } else {
       // Check if we have recording consent (within 10 seconds)
       if (!this.hasRecordingConsent) {
-        this.showRecordingConfirmation(event);
+        this.showRecordingConsent();
       } else {
         this.handleRecordClick();
       }
@@ -519,6 +539,9 @@ class VoiceRecorder {
   }
 
   async processRecording(buttonId) {
+    // Disable buttons immediately to prevent double-clicking
+    this.disableButtons();
+
     try {
       // Check if we have any audio data
       if (this.audioChunks.length === 0) {
@@ -550,15 +573,15 @@ class VoiceRecorder {
       // Save to OneDrive
       await this.saveToOneDrive(mp3Blob, buttonId);
 
-      this.showStatus("Recording saved successfully!", 3000);
+      this.showStatus("Recording saved successfully!", 2000);
 
-      // Show continue modal after successful recording
-      setTimeout(() => {
-        this.showContinueModal();
-      }, 2000);
+      // Show continue modal immediately after processing
+      this.showContinueModal();
     } catch (error) {
       console.error("Error processing recording:", error);
       this.showStatus(`Error: ${error.message}`, 5000);
+      // Re-enable buttons if there was an error
+      this.enableButtons();
     }
 
     this.resetButton();
@@ -746,20 +769,16 @@ class VoiceRecorder {
     this.currentQuestionIndex++;
   }
 
-  showRecordingConfirmation(event) {
-    const modal = document.getElementById("recording-confirmation-modal");
-    modal.style.display = "block";
-  }
-
-  hideRecordingConfirmation() {
-    const modal = document.getElementById("recording-confirmation-modal");
-    modal.style.display = "none";
-  }
-
   skipQuestion() {
     // Prevent skipping during recording
     if (this.isRecording) {
       this.showStatus("Cannot skip question while recording", 2000);
+      return;
+    }
+
+    // Check if skip button is disabled
+    const skipBtn = document.getElementById("skip-question-btn");
+    if (skipBtn && skipBtn.disabled) {
       return;
     }
 
@@ -780,6 +799,9 @@ class VoiceRecorder {
   showContinueModal() {
     const modal = document.getElementById("continue-modal");
     modal.style.display = "block";
+
+    // Re-enable buttons when modal is shown
+    this.enableButtons();
   }
 
   hideContinueModal() {
@@ -819,6 +841,40 @@ class VoiceRecorder {
     setTimeout(() => {
       this.showGDPRModal();
     }, 3500);
+  }
+
+  disableButtons() {
+    const recordBtn = document.getElementById("main-record-btn");
+    const skipBtn = document.getElementById("skip-question-btn");
+
+    if (recordBtn) {
+      recordBtn.disabled = true;
+      recordBtn.style.opacity = "0.5";
+      recordBtn.style.cursor = "not-allowed";
+    }
+
+    if (skipBtn) {
+      skipBtn.disabled = true;
+      skipBtn.style.opacity = "0.5";
+      skipBtn.style.cursor = "not-allowed";
+    }
+  }
+
+  enableButtons() {
+    const recordBtn = document.getElementById("main-record-btn");
+    const skipBtn = document.getElementById("skip-question-btn");
+
+    if (recordBtn) {
+      recordBtn.disabled = false;
+      recordBtn.style.opacity = "1";
+      recordBtn.style.cursor = "pointer";
+    }
+
+    if (skipBtn) {
+      skipBtn.disabled = false;
+      skipBtn.style.opacity = "1";
+      skipBtn.style.cursor = "pointer";
+    }
   }
 }
 
