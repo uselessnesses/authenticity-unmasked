@@ -357,11 +357,13 @@ body {
 .consent-text a {
   color: #66ccff;
   text-decoration: none;
+  pointer-events: none;
+  cursor: default;
 }
 
 .consent-text a:hover {
-  text-decoration: underline;
-  color: #99ddff;
+  text-decoration: none;
+  color: #66ccff;
 }
 
 .modal-content h3 {
