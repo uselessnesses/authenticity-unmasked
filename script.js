@@ -18,6 +18,8 @@ class VoiceRecorder {
     this.isRecording = false;
     this.currentButton = null;
     this.hasConsent = false;
+    this.hasRecordingConsent = false;
+    this.consentTimer = null;
     this.audioContext = null;
     this.stream = null;
     this.questions = [
@@ -164,23 +166,14 @@ class VoiceRecorder {
   }
 
   async initializeApp() {
-    // Show GDPR consent modal on first visit
-    if (!localStorage.getItem("gdpr-consent")) {
-      this.showGDPRModal();
-    } else {
-      this.hasConsent = localStorage.getItem("gdpr-consent") === "true";
-    }
+    // Always show GDPR consent modal on app start
+    this.showGDPRModal();
 
     // Initialize recording buttons
     this.setupEventListeners();
 
     // Load a random question
     this.loadRandomQuestion();
-
-    // Check for microphone permissions
-    if (this.hasConsent) {
-      await this.checkMicrophonePermissions();
-    }
   }
 
   showGDPRModal() {
@@ -189,18 +182,23 @@ class VoiceRecorder {
 
     document.getElementById("consent-yes").onclick = () => {
       this.hasConsent = true;
-      localStorage.setItem("gdpr-consent", "true");
       modal.style.display = "none";
       this.checkMicrophonePermissions();
     };
 
     document.getElementById("consent-no").onclick = () => {
       this.hasConsent = false;
-      localStorage.setItem("gdpr-consent", "false");
       modal.style.display = "none";
-      this.showStatus(
-        "Recording disabled. You can still use the survey option."
-      );
+      // Don't allow access to the interface
+      document.body.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #fff;">
+          <div>
+            <h2>Thank you for your time</h2>
+            <p>You have chosen not to participate in this study.</p>
+            <p>You can close this window or refresh to start again.</p>
+          </div>
+        </div>
+      `;
     };
   }
 
@@ -216,6 +214,7 @@ class VoiceRecorder {
       .getElementById("confirm-recording")
       ?.addEventListener("click", () => {
         this.hideRecordingConfirmation();
+        this.hasRecordingConsent = true;
         this.handleRecordClick();
       });
 
@@ -224,6 +223,18 @@ class VoiceRecorder {
       ?.addEventListener("click", () => {
         this.hideRecordingConfirmation();
       });
+
+    // Continue modal buttons
+    document.getElementById("continue-yes")?.addEventListener("click", () => {
+      this.hideContinueModal();
+      this.startConsentTimer();
+      this.moveToNextQuestion();
+    });
+
+    document.getElementById("continue-no")?.addEventListener("click", () => {
+      this.hideContinueModal();
+      this.showThankYouAndRestart();
+    });
 
     // Skip question button
     document
@@ -311,8 +322,12 @@ class VoiceRecorder {
     if (this.isRecording) {
       this.handleRecordClick();
     } else {
-      // If not recording, show confirmation first
-      this.showRecordingConfirmation(event);
+      // Check if we have recording consent (within 10 seconds)
+      if (!this.hasRecordingConsent) {
+        this.showRecordingConfirmation(event);
+      } else {
+        this.handleRecordClick();
+      }
     }
   }
 
@@ -503,10 +518,9 @@ class VoiceRecorder {
 
       this.showStatus("Recording saved successfully!", 3000);
 
-      // Move to next question after successful recording
+      // Show continue modal after successful recording
       setTimeout(() => {
-        this.moveToNextQuestion();
-        this.loadRandomQuestion(true);
+        this.showContinueModal();
       }, 2000);
     } catch (error) {
       console.error("Error processing recording:", error);
@@ -727,6 +741,50 @@ class VoiceRecorder {
         this.loadRandomQuestion(true);
       }, 400);
     }
+  }
+
+  showContinueModal() {
+    const modal = document.getElementById("continue-modal");
+    modal.style.display = "block";
+  }
+
+  hideContinueModal() {
+    const modal = document.getElementById("continue-modal");
+    modal.style.display = "none";
+  }
+
+  startConsentTimer() {
+    // Clear any existing timer
+    if (this.consentTimer) {
+      clearTimeout(this.consentTimer);
+    }
+
+    // Set timer for 10 seconds
+    this.consentTimer = setTimeout(() => {
+      this.hasRecordingConsent = false;
+      this.showStatus(
+        "Recording consent expired. You'll need to consent again.",
+        3000
+      );
+    }, 10000);
+  }
+
+  showThankYouAndRestart() {
+    // Clear any consent timer
+    if (this.consentTimer) {
+      clearTimeout(this.consentTimer);
+    }
+
+    // Reset consent states
+    this.hasRecordingConsent = false;
+
+    // Show thank you message
+    this.showStatus("Thank you for your participation!", 3000);
+
+    // Restart the flow by showing GDPR modal again after a delay
+    setTimeout(() => {
+      this.showGDPRModal();
+    }, 3500);
   }
 }
 
