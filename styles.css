@@ -465,11 +465,17 @@ body {
   max-width: 400px;
   word-wrap: break-word;
   line-height: 1.3;
+  cursor: pointer;
+  user-select: none;
 }
 
 #version-display:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: scale(1.05);
+}
+
+#version-display:active {
+  transform: scale(0.98);
 }
 
 .status-hidden {

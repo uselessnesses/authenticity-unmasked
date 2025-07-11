@@ -176,9 +176,40 @@
         if (!versionDisplay || !versionText) return;
 
         // Ensure AZURE_CONFIG is available
-        const version = window.AZURE_CONFIG?.MANUAL_VERSION || "0.32";
+        const version = window.AZURE_CONFIG?.MANUAL_VERSION || "0.33";
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
+
+        // Store full version info
+        let fullVersionInfo = `v${version}, ${buildDate || "N/A"}, ${
+          buildTime || "N/A"
+        }, Built locally`;
+        let shortVersionInfo = `v${version}`;
+
+        // Set initial display to short version
+        versionText.textContent = shortVersionInfo;
+
+        // Add hover and click functionality
+        let isExpanded = false;
+
+        versionDisplay.addEventListener("mouseenter", () => {
+          if (!isExpanded) {
+            versionText.textContent = fullVersionInfo;
+          }
+        });
+
+        versionDisplay.addEventListener("mouseleave", () => {
+          if (!isExpanded) {
+            versionText.textContent = shortVersionInfo;
+          }
+        });
+
+        versionDisplay.addEventListener("click", () => {
+          isExpanded = !isExpanded;
+          versionText.textContent = isExpanded
+            ? fullVersionInfo
+            : shortVersionInfo;
+        });
 
         // Try to fetch GitHub commit info
         fetch(
@@ -217,21 +248,27 @@
 
               const msg = commit.commit.message.split("\n")[0];
 
-              // Set the format: "version, date of publish, time of publish, commit message"
-              versionText.textContent = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
+              // Update version info with GitHub data
+              fullVersionInfo = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
+              shortVersionInfo = `v${version}`;
+
+              // Update display based on current state
+              versionText.textContent = isExpanded
+                ? fullVersionInfo
+                : shortVersionInfo;
             } else {
-              // Fallback to config data
-              versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
-                buildTime || "N/A"
-              }, Built locally`;
+              // Keep the fallback data already set
+              versionText.textContent = isExpanded
+                ? fullVersionInfo
+                : shortVersionInfo;
             }
           })
           .catch((error) => {
             console.log("GitHub API unavailable:", error.message);
-            // Fallback to config data with same format
-            versionText.textContent = `v${version}, ${buildDate || "N/A"}, ${
-              buildTime || "N/A"
-            }, Built locally`;
+            // Keep the fallback data already set
+            versionText.textContent = isExpanded
+              ? fullVersionInfo
+              : shortVersionInfo;
           });
       });
     </script>
