@@ -280,6 +280,7 @@ class VoiceRecorder {
       this.hideContinueModal();
       this.startConsentTimer();
       this.moveToNextQuestion();
+      this.loadRandomQuestion(true); // Load the new question with animation
     });
 
     document.getElementById("continue-no")?.addEventListener("click", () => {
@@ -760,12 +761,6 @@ class VoiceRecorder {
   }
 
   loadRandomQuestion(animated = false) {
-    // Shuffle questions if we've gone through all of them
-    if (this.currentQuestionIndex >= this.questions.length) {
-      this.currentQuestionIndex = 0;
-      this.shuffleQuestions();
-    }
-
     const questionElement = document.getElementById("current-question");
     if (questionElement) {
       if (animated) {
@@ -793,7 +788,24 @@ class VoiceRecorder {
   }
 
   moveToNextQuestion() {
-    this.currentQuestionIndex++;
+    // Select a truly random question index
+    const previousQuestionIndex = this.currentQuestionIndex;
+
+    // If we only have one question, we can't avoid repetition
+    if (this.questions.length <= 1) {
+      return;
+    }
+
+    // Keep selecting random questions until we get a different one
+    do {
+      this.currentQuestionIndex = Math.floor(
+        Math.random() * this.questions.length
+      );
+    } while (this.currentQuestionIndex === previousQuestionIndex);
+
+    console.log(
+      `Question changed from ${previousQuestionIndex} to ${this.currentQuestionIndex}`
+    );
   }
 
   skipQuestion() {
