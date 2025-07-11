@@ -20,6 +20,7 @@ class VoiceRecorder {
     this.hasConsent = false;
     this.hasRecordingConsent = false;
     this.consentTimer = null;
+    this.recordingTimer = null; // Add recording timeout timer
     this.audioContext = null;
     this.stream = null;
     this.questions = [
@@ -180,17 +181,15 @@ class VoiceRecorder {
   }
   showGDPRModal() {
     const modal = document.getElementById("gdpr-modal");
-    const modalContent = modal.querySelector(".modal-content");
 
     // Reset scroll position to top
-    if (modalContent) {
-      modalContent.scrollTop = 0;
-    }
+    this.resetModalScroll();
 
     modal.style.display = "block";
 
     document.getElementById("consent-yes").onclick = () => {
       this.hasConsent = true;
+      this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       this.enableButtons(); // Re-enable buttons when consent is given
       this.checkMicrophonePermissions();
@@ -198,6 +197,7 @@ class VoiceRecorder {
 
     document.getElementById("consent-no").onclick = () => {
       this.hasConsent = false;
+      this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       // Don't allow access to the interface
       document.body.innerHTML = `
@@ -247,22 +247,21 @@ class VoiceRecorder {
   }
   showRecordingConsent() {
     const modal = document.getElementById("gdpr-modal");
-    const modalContent = modal.querySelector(".modal-content");
 
     // Reset scroll position to top
-    if (modalContent) {
-      modalContent.scrollTop = 0;
-    }
+    this.resetModalScroll();
 
     modal.style.display = "block";
 
     document.getElementById("consent-yes").onclick = () => {
       this.hasRecordingConsent = true;
+      this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       this.handleRecordClick();
     };
 
     document.getElementById("consent-no").onclick = () => {
+      this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       // Don't set hasRecordingConsent to false, just cancel this recording attempt
       // Buttons should remain enabled since general consent was already given
@@ -446,6 +445,18 @@ class VoiceRecorder {
       // Start recording with larger chunks for better capture
       this.mediaRecorder.start(1000); // Collect data every 1 second
 
+      // Set up 5-minute timeout for recording
+      this.recordingTimer = setTimeout(() => {
+        if (this.isRecording) {
+          console.log("Recording timeout reached (5 minutes)");
+          this.showStatus(
+            "Recording automatically stopped after 5 minutes",
+            3000
+          );
+          this.stopRecording();
+        }
+      }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
       // Add audio level monitoring
       this.monitorAudioLevel();
 
@@ -514,6 +525,12 @@ class VoiceRecorder {
 
       // Set flag first to prevent race conditions
       this.isRecording = false;
+
+      // Clear recording timeout timer
+      if (this.recordingTimer) {
+        clearTimeout(this.recordingTimer);
+        this.recordingTimer = null;
+      }
 
       // Stop the media recorder
       if (this.mediaRecorder.state === "recording") {
@@ -720,6 +737,12 @@ class VoiceRecorder {
     }
     this.isRecording = false;
     this.audioChunks = [];
+
+    // Clear recording timer if it exists
+    if (this.recordingTimer) {
+      clearTimeout(this.recordingTimer);
+      this.recordingTimer = null;
+    }
   }
 
   showStatus(message, duration = null) {
@@ -881,6 +904,15 @@ class VoiceRecorder {
       skipBtn.disabled = false;
       skipBtn.style.opacity = "1";
       skipBtn.style.cursor = "pointer";
+    }
+  }
+
+  resetModalScroll() {
+    const modal = document.getElementById("gdpr-modal");
+    const modalContent = modal.querySelector(".modal-content");
+
+    if (modalContent) {
+      modalContent.scrollTop = 0;
     }
   }
 }
