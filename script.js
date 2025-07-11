@@ -166,6 +166,9 @@ class VoiceRecorder {
   }
 
   async initializeApp() {
+    // Disable buttons initially until consent is given
+    this.disableButtons();
+
     // Always show GDPR consent modal on app start
     this.showGDPRModal();
 
@@ -175,7 +178,6 @@ class VoiceRecorder {
     // Load a random question
     this.loadRandomQuestion();
   }
-
   showGDPRModal() {
     const modal = document.getElementById("gdpr-modal");
     const modalContent = modal.querySelector(".modal-content");
@@ -190,6 +192,7 @@ class VoiceRecorder {
     document.getElementById("consent-yes").onclick = () => {
       this.hasConsent = true;
       modal.style.display = "none";
+      this.enableButtons(); // Re-enable buttons when consent is given
       this.checkMicrophonePermissions();
     };
 
@@ -242,7 +245,6 @@ class VoiceRecorder {
       }, 1000);
     };
   }
-
   showRecordingConsent() {
     const modal = document.getElementById("gdpr-modal");
     const modalContent = modal.querySelector(".modal-content");
@@ -263,6 +265,7 @@ class VoiceRecorder {
     document.getElementById("consent-no").onclick = () => {
       modal.style.display = "none";
       // Don't set hasRecordingConsent to false, just cancel this recording attempt
+      // Buttons should remain enabled since general consent was already given
     };
   }
 
@@ -368,6 +371,7 @@ class VoiceRecorder {
     }
 
     if (!this.hasConsent) {
+      this.disableButtons(); // Ensure buttons are disabled
       this.showGDPRModal();
       return;
     }
@@ -831,16 +835,19 @@ class VoiceRecorder {
       clearTimeout(this.consentTimer);
     }
 
-    // Reset consent states
+    // Reset consent states immediately
     this.hasRecordingConsent = false;
 
-    // Show thank you message
-    this.showStatus("Thank you for your participation!", 3000);
+    // Disable buttons immediately to prevent clicking
+    this.disableButtons();
 
-    // Restart the flow by showing GDPR modal again after a delay
+    // Show thank you message briefly
+    this.showStatus("Thank you for your participation!", 2000);
+
+    // Show GDPR modal immediately with a short delay
     setTimeout(() => {
       this.showGDPRModal();
-    }, 3500);
+    }, 1000);
   }
 
   disableButtons() {
