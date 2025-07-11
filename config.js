@@ -17,7 +17,7 @@ const AZURE_CONFIG = {
 
   // Version info - update this with each deployment
   VERSION: "2.4.0", // Legacy version for reference
-  MANUAL_VERSION: "0.31", // Manual version - increment with each code change
+  MANUAL_VERSION: "0.32", // Manual version - increment with each code change
   BUILD_DATE: "2025-01-27", // Updated date
   BUILD_TIME: "14:30", // Add specific time for same-day deployments
   COMMIT_HASH: "a1b2c3d", // Manually update this with actual git commit hash
