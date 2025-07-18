@@ -21,6 +21,7 @@ class VoiceRecorder {
     this.hasRecordingConsent = false;
     this.consentTimer = null;
     this.recordingTimer = null; // Add recording timeout timer
+    this.sessionConsentTimer = null; // Add session consent timer
     this.audioContext = null;
     this.stream = null;
     this.questions = [
@@ -167,11 +168,11 @@ class VoiceRecorder {
   }
 
   async initializeApp() {
-    // Disable buttons initially until consent is given
-    this.disableButtons();
+    // Don't disable buttons initially - let them be enabled but check consent on click
+    this.enableButtons();
 
-    // Always show GDPR consent modal on app start
-    this.showGDPRModal();
+    // Don't show GDPR consent modal on app start - only when record button is pressed
+    // this.showGDPRModal();
 
     // Initialize recording buttons
     this.setupEventListeners();
@@ -254,9 +255,11 @@ class VoiceRecorder {
     modal.style.display = "block";
 
     document.getElementById("consent-yes").onclick = () => {
+      this.hasConsent = true;
       this.hasRecordingConsent = true;
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
+      this.startSessionConsentTimer(); // Start session consent timer
       this.handleRecordClick();
     };
 
@@ -264,7 +267,7 @@ class VoiceRecorder {
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       // Don't set hasRecordingConsent to false, just cancel this recording attempt
-      // Buttons should remain enabled since general consent was already given
+      // Keep hasConsent false so they'll need to consent again
     };
   }
 
@@ -278,14 +281,15 @@ class VoiceRecorder {
     // Continue modal buttons
     document.getElementById("continue-yes")?.addEventListener("click", () => {
       this.hideContinueModal();
-      this.startConsentTimer();
+      // Start session consent timer (extends the consent window)
+      this.startSessionConsentTimer();
       this.moveToNextQuestion();
       this.loadRandomQuestion(true); // Load the new question with animation
     });
 
     document.getElementById("continue-no")?.addEventListener("click", () => {
       this.hideContinueModal();
-      this.showThankYouAndRestart();
+      this.showThankYouAndExit();
     });
 
     // Skip question button
@@ -370,22 +374,18 @@ class VoiceRecorder {
       return;
     }
 
-    if (!this.hasConsent) {
-      this.disableButtons(); // Ensure buttons are disabled
-      this.showGDPRModal();
-      return;
-    }
-
     // If currently recording, stop immediately without confirmation
     if (this.isRecording) {
       this.handleRecordClick();
+      return;
+    }
+
+    // Check if we have session consent (broader consent window)
+    if (!this.hasConsent) {
+      this.showRecordingConsent();
     } else {
-      // Check if we have recording consent (within 10 seconds)
-      if (!this.hasRecordingConsent) {
-        this.showRecordingConsent();
-      } else {
-        this.handleRecordClick();
-      }
+      // We have session consent, proceed with recording
+      this.handleRecordClick();
     }
   }
 
@@ -864,25 +864,64 @@ class VoiceRecorder {
     }, 10000);
   }
 
-  showThankYouAndRestart() {
-    // Clear any consent timer
+  showThankYouAndExit() {
+    // Clear any consent timers
     if (this.consentTimer) {
       clearTimeout(this.consentTimer);
     }
+    if (this.sessionConsentTimer) {
+      clearTimeout(this.sessionConsentTimer);
+    }
 
-    // Reset consent states immediately
+    // Reset all consent states immediately
+    this.hasConsent = false;
     this.hasRecordingConsent = false;
 
-    // Disable buttons immediately to prevent clicking
-    this.disableButtons();
+    // Show thank you message with countdown
+    document.body.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #fff; font-family: Arial, sans-serif;">
+        <div>
+          <h2 style="margin-bottom: 30px; font-size: 2rem;">Thank you for your time</h2>
+          <p id="countdown" style="font-size: 1.2rem; color: #ccc; margin-bottom: 20px;">Returning to home screen in 10 seconds...</p>
+          <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin: 20px auto; overflow: hidden;">
+            <div id="progress-bar" style="width: 100%; height: 100%; background: #fff; border-radius: 2px; transition: width 0.1s linear;"></div>
+          </div>
+        </div>
+      </div>
+    `;
 
-    // Show thank you message briefly
-    this.showStatus("Thank you for your participation!", 2000);
+    // Auto-refresh after 10 seconds with countdown
+    let countdown = 10;
+    const countdownElement = document.getElementById("countdown");
+    const progressBar = document.getElementById("progress-bar");
 
-    // Show GDPR modal immediately with a short delay
-    setTimeout(() => {
-      this.showGDPRModal();
+    const timer = setInterval(() => {
+      countdown--;
+      countdownElement.textContent = `Returning to home screen in ${countdown} seconds...`;
+
+      // Update progress bar
+      const progress = (countdown / 10) * 100;
+      progressBar.style.width = `${progress}%`;
+
+      if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.reload();
+      }
     }, 1000);
+  }
+
+  startSessionConsentTimer() {
+    // Clear any existing session timer
+    if (this.sessionConsentTimer) {
+      clearTimeout(this.sessionConsentTimer);
+    }
+
+    // Set timer for 5 minutes (longer session consent window)
+    this.sessionConsentTimer = setTimeout(() => {
+      this.hasConsent = false;
+      this.hasRecordingConsent = false;
+      console.log("Session consent expired. Next user will need to consent.");
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
   }
 
   disableButtons() {
