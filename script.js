@@ -22,6 +22,7 @@ class VoiceRecorder {
     this.consentTimer = null;
     this.recordingTimer = null; // Add recording timeout timer
     this.sessionConsentTimer = null; // Add session consent timer
+    this.inactivityTimer = null; // Add inactivity timer for consent expiry
     this.audioContext = null;
     this.stream = null;
     this.questions = [
@@ -193,6 +194,7 @@ class VoiceRecorder {
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       this.enableButtons(); // Re-enable buttons when consent is given
+      this.startInactivityTimer(); // Start inactivity timer
       this.checkMicrophonePermissions();
     };
 
@@ -260,6 +262,7 @@ class VoiceRecorder {
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
       this.startSessionConsentTimer(); // Start session consent timer
+      this.startInactivityTimer(); // Start inactivity timer
       this.handleRecordClick();
     };
 
@@ -275,19 +278,25 @@ class VoiceRecorder {
     // Main recording button
     const recordBtn = document.getElementById("main-record-btn");
     if (recordBtn) {
-      recordBtn.addEventListener("click", (e) => this.handleButtonClick(e));
+      recordBtn.addEventListener("click", (e) => {
+        this.resetInactivityTimer(); // Reset timer on user interaction
+        this.handleButtonClick(e);
+      });
     }
 
     // Continue modal buttons
     document.getElementById("continue-yes")?.addEventListener("click", () => {
+      this.resetInactivityTimer(); // Reset timer on user interaction
       this.hideContinueModal();
       // Start session consent timer (extends the consent window)
       this.startSessionConsentTimer();
+      this.startInactivityTimer(); // Ensure inactivity timer is running
       this.moveToNextQuestion();
       this.loadRandomQuestion(true); // Load the new question with animation
     });
 
     document.getElementById("continue-no")?.addEventListener("click", () => {
+      this.resetInactivityTimer(); // Reset timer on user interaction
       this.hideContinueModal();
       this.showThankYouAndExit();
     });
@@ -296,11 +305,13 @@ class VoiceRecorder {
     document
       .getElementById("skip-question-btn")
       ?.addEventListener("click", () => {
+        this.resetInactivityTimer(); // Reset timer on user interaction
         this.skipQuestion();
       });
 
     // Prevent double-tap zoom on mobile
     document.addEventListener("touchstart", (e) => {
+      this.resetInactivityTimer(); // Reset timer on any touch
       if (e.touches.length > 1) {
         e.preventDefault();
       }
@@ -310,6 +321,7 @@ class VoiceRecorder {
     document.addEventListener(
       "touchend",
       (e) => {
+        this.resetInactivityTimer(); // Reset timer on touch end
         const now = new Date().getTime();
         if (now - lastTouchEnd <= 300) {
           e.preventDefault();
@@ -318,6 +330,19 @@ class VoiceRecorder {
       },
       false
     );
+
+    // Add general activity listeners to reset timer
+    document.addEventListener("click", () => {
+      this.resetInactivityTimer();
+    });
+
+    document.addEventListener("keydown", () => {
+      this.resetInactivityTimer();
+    });
+
+    document.addEventListener("mousemove", () => {
+      this.resetInactivityTimer();
+    });
   }
 
   async checkMicrophonePermissions() {
@@ -935,12 +960,58 @@ class VoiceRecorder {
       clearTimeout(this.sessionConsentTimer);
     }
 
-    // Set timer for 5 minutes (longer session consent window)
+    // Set timer for 30 seconds (shorter session consent window)
     this.sessionConsentTimer = setTimeout(() => {
       this.hasConsent = false;
       this.hasRecordingConsent = false;
-      console.log("Session consent expired. Next user will need to consent.");
-    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+      console.log("Session consent expired after 30 seconds of inactivity.");
+      this.showConsentExpiredNotice();
+    }, 30 * 1000); // 30 seconds in milliseconds
+  }
+
+  startInactivityTimer() {
+    // Clear any existing inactivity timer
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+
+    // Set timer for 30 seconds of inactivity
+    this.inactivityTimer = setTimeout(() => {
+      this.hasConsent = false;
+      this.hasRecordingConsent = false;
+      console.log("Consent expired due to inactivity.");
+      this.showConsentExpiredNotice();
+    }, 30 * 1000); // 30 seconds in milliseconds
+  }
+
+  resetInactivityTimer() {
+    // Clear existing timer
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+
+    // Only start new timer if we have consent
+    if (this.hasConsent) {
+      this.startInactivityTimer();
+    }
+  }
+
+  showConsentExpiredNotice() {
+    // Show a subtle notice that consent has expired
+    this.showStatus("New consent required for next user", 3000);
+
+    // Add a subtle visual indicator
+    const statusDisplay = document.getElementById("status-display");
+    if (statusDisplay) {
+      statusDisplay.style.backgroundColor = "rgba(255, 255, 0, 0.1)";
+      statusDisplay.style.border = "1px solid rgba(255, 255, 0, 0.3)";
+
+      // Reset styling after 3 seconds
+      setTimeout(() => {
+        statusDisplay.style.backgroundColor = "";
+        statusDisplay.style.border = "";
+      }, 3000);
+    }
   }
 
   disableButtons() {
