@@ -1,15 +1,12 @@
-// Azure AD Configuration
-// IMPORTANT: Replace these values with your actual Azure App Registration details
+// Server Configuration
+// IMPORTANT: Update SERVER_URL with your deployed server URL
 
 const AZURE_CONFIG = {
-  // Get this from Azure Portal > App Registrations > Your App > Overview
-  CLIENT_ID: "cf187f7d-56fa-43ed-81f9-886671237afe",
+  // Server URL for file uploads (your backend server)
+  SERVER_URL: "http://localhost:3000", // Change this to your deployed server URL
 
-  // Your GitHub Pages URL (e.g., 'https://yourusername.github.io/authenticity-unmasked')
-  REDIRECT_URI: "https://uselessnesses.github.io/authenticity-unmasked", // UPDATE WITH YOUR ACTUAL GITHUB USERNAME
-
-  // Your tenant ID (since your app is "My organization only")
-  TENANT_ID: "2e9f06b0-1669-4589-8789-10a06934dc61",
+  // GitHub Pages URL for reference
+  REDIRECT_URI: "https://uselessnesses.github.io/authenticity-unmasked",
 
   // Microsoft Forms URL (replace with your actual form)
   FORMS_URL:
@@ -17,10 +14,10 @@ const AZURE_CONFIG = {
 
   // Version info - update this with each deployment
   VERSION: "2.4.0", // Legacy version for reference
-  MANUAL_VERSION: "0.42", // Manual version - increment with each code change
+  MANUAL_VERSION: "0.45", // Manual version - increment with each code change
   BUILD_DATE: "2025-01-27", // Updated date
-  BUILD_TIME: "15:20", // Add specific time for same-day deployments
-  COMMIT_HASH: "a1b2c3d", // Manually update this with actual git commit hash
+  BUILD_TIME: "16:30", // Add specific time for same-day deployments
+  COMMIT_HASH: "server-upload", // Manually update this with actual git commit hash
 };
 
 // Export for use in main script

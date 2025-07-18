@@ -1,16 +1,8 @@
-// Initialize MSAL instance variable
-let msalInstance = null;
-let msalConfig = null;
+// Server-based OneDrive Upload System
+// Files are uploaded to a Node.js server which handles authentication and OneDrive upload
+// No authentication required on client devices - perfect for exhibition kiosks
 
-const loginRequest = {
-  scopes: [
-    "https://graph.microsoft.com/Files.ReadWrite",
-    "https://graph.microsoft.com/User.Read",
-  ],
-  prompt: "select_account", // Force account selection
-};
-
-// Azure AD Configuration - using values from config.js
+// Configuration from config.js
 class VoiceRecorder {
   constructor() {
     this.mediaRecorder = null;
@@ -45,135 +37,13 @@ class VoiceRecorder {
       Math.random() * this.questions.length
     );
 
-    // Initialize Microsoft Graph authentication
-    this.initializeMSAL();
-
+    // Initialize the app with server-based uploads (no authentication needed on client)
     this.initializeApp();
   }
 
-  initializeMSAL() {
-    try {
-      // Ensure Azure config is available
-      if (!window.AZURE_CONFIG) {
-        throw new Error("Azure configuration not loaded");
-      }
-
-      // Create MSAL configuration
-      msalConfig = {
-        auth: {
-          clientId: window.AZURE_CONFIG.CLIENT_ID,
-          authority: `https://login.microsoftonline.com/${window.AZURE_CONFIG.TENANT_ID}`,
-          redirectUri: window.AZURE_CONFIG.REDIRECT_URI,
-        },
-        cache: {
-          cacheLocation: "localStorage",
-          storeAuthStateInCookie: false,
-        },
-        system: {
-          loggerOptions: {
-            loggerCallback: (level, message, containsPii) => {
-              console.log("MSAL Log:", message);
-            },
-            piiLoggingEnabled: false,
-            logLevel: 3, // Verbose logging
-          },
-        },
-      };
-
-      console.log("Initializing MSAL with config:", msalConfig);
-      msalInstance = new msal.PublicClientApplication(msalConfig);
-      console.log("MSAL initialized successfully", msalInstance);
-
-      // Add error event handler
-      msalInstance.addEventCallback((message) => {
-        console.log("MSAL Event:", message);
-      });
-    } catch (error) {
-      console.error("MSAL initialization failed:", error);
-      this.showStatus(
-        "Authentication setup failed. Please refresh the page.",
-        5000
-      );
-    }
-  }
-
-  async getAccessToken() {
-    try {
-      console.log("Starting authentication process...");
-
-      // Check if MSAL instance exists
-      if (!msalInstance) {
-        console.error("MSAL instance not initialized");
-        throw new Error(
-          "Authentication not properly initialized. Please refresh the page."
-        );
-      }
-
-      console.log("MSAL instance:", msalInstance);
-      console.log("Config:", msalConfig);
-
-      // Try to get token silently first
-      const accounts = msalInstance.getAllAccounts();
-      console.log("Existing accounts:", accounts.length);
-
-      if (accounts.length > 0) {
-        const silentRequest = {
-          ...loginRequest,
-          account: accounts[0],
-        };
-
-        try {
-          console.log("Attempting silent token acquisition...");
-          const response = await msalInstance.acquireTokenSilent(silentRequest);
-          console.log("Silent token acquisition successful");
-          return response.accessToken;
-        } catch (silentError) {
-          console.log("Silent token acquisition failed:", silentError);
-          console.log("Error code:", silentError.errorCode);
-          console.log("Error message:", silentError.errorMessage);
-        }
-      }
-
-      // If silent fails, use popup
-      console.log("Attempting popup login...");
-      const response = await msalInstance.loginPopup(loginRequest);
-      console.log("Popup login successful:", response);
-      return response.accessToken;
-    } catch (error) {
-      console.error("Authentication failed - Full error:", error);
-      console.error("Error name:", error.name);
-      console.error("Error message:", error.message);
-      console.error("Error code:", error.errorCode);
-      console.error("Error description:", error.errorDescription);
-
-      // Provide more specific error messages
-      let userMessage = "OneDrive authentication failed. ";
-
-      if (error.errorCode === "invalid_client") {
-        userMessage +=
-          "Invalid client ID. Please check Azure app registration.";
-      } else if (error.errorCode === "redirect_uri_mismatch") {
-        userMessage +=
-          "Redirect URI mismatch. Please check Azure app authentication settings.";
-      } else if (error.errorCode === "access_denied") {
-        userMessage +=
-          "Access denied. Please ensure you have the required permissions.";
-      } else if (error.errorCode === "interaction_required") {
-        userMessage += "User interaction required. Please try again.";
-      } else {
-        userMessage += `Error: ${error.message || "Unknown error occurred"}`;
-      }
-
-      throw new Error(userMessage);
-    }
-  }
-
   async initializeApp() {
-    // Don't disable buttons initially - let them be enabled but check consent on click
+    // Enable buttons for recording (no authentication required on client)
     this.enableButtons();
-
-    // Don't show GDPR consent modal on app start - only when record button is pressed
-    // this.showGDPRModal();
 
     // Initialize recording buttons
     this.setupEventListeners();
@@ -644,63 +514,55 @@ class VoiceRecorder {
 
   async saveToOneDrive(audioBlob, questionIndex) {
     try {
-      this.showStatus("Authenticating with OneDrive...");
-
-      // Get access token
-      const accessToken = await this.getAccessToken();
-
       this.showStatus("Uploading to OneDrive...");
 
-      // Create filename with timestamp and question info
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      // Get server URL from config
+      const serverUrl =
+        window.AZURE_CONFIG.SERVER_URL || "http://localhost:3000";
+
+      // Create filename info
       const questionText = this.questions[questionIndex] || "unknown-question";
 
-      // Create a safe filename by removing special characters and limiting length
-      const safeQuestionText = questionText
-        .replace(/[^a-zA-Z0-9\s]/g, "") // Remove special chars except spaces
-        .replace(/\s+/g, "-") // Replace spaces with hyphens
-        .toLowerCase()
-        .substring(0, 50); // Limit length to 50 chars
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.mp3");
+      formData.append("questionIndex", questionIndex + 1);
+      formData.append("questionText", questionText);
 
-      const filename = `voice-recording-q${
-        questionIndex + 1
-      }-${safeQuestionText}-${timestamp}.mp3`;
+      console.log(`Uploading to server: ${serverUrl}/upload`);
 
-      console.log("Creating filename:", filename);
-
-      // Upload file directly to OneDrive using Microsoft Graph API
-      const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/Exhibition-Recordings/${filename}:/content`;
-
-      const response = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "audio/mp3",
-        },
-        body: audioBlob,
+      const response = await fetch(`${serverUrl}/upload`, {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          `Upload failed: ${response.status} ${response.statusText}`
+          `Upload failed: ${response.status} ${response.statusText} - ${
+            errorData.message || ""
+          }`
         );
       }
 
       const result = await response.json();
-      console.log("File uploaded to OneDrive successfully:", result);
+      console.log("File uploaded successfully:", result);
 
       // Store recording metadata
       this.storeRecordingMetadata(
         questionIndex,
-        filename,
-        audioBlob.size,
-        result.webUrl,
+        result.filename,
+        result.size,
+        result.oneDriveUrl,
         questionText
       );
-    } catch (error) {
-      console.error("OneDrive upload failed:", error);
 
-      // Fallback: create download link for manual saving with safe filename
+      this.showStatus("Recording saved to OneDrive successfully!", 3000);
+      console.log("File saved successfully:", result.filename);
+    } catch (error) {
+      console.error("Upload failed:", error);
+
+      // Fallback: create download link for manual saving
       const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const questionText = this.questions[questionIndex] || "unknown-question";
       const safeQuestionText = questionText
@@ -708,12 +570,12 @@ class VoiceRecorder {
         .replace(/\s+/g, "-")
         .toLowerCase()
         .substring(0, 50);
-      const fallbackFilename = `voice-recording-q${
+      const fallbackFilename = `exhibition-voice-q${
         questionIndex + 1
       }-${safeQuestionText}-${safeTimestamp}.mp3`;
 
       this.showStatus(
-        "OneDrive upload failed. Downloading file locally...",
+        "Server upload failed. Downloading file locally...",
         3000
       );
       this.createDownloadLink(audioBlob, fallbackFilename);
