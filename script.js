@@ -1005,11 +1005,13 @@ class VoiceRecorder {
     if (statusDisplay) {
       statusDisplay.style.backgroundColor = "rgba(255, 255, 0, 0.1)";
       statusDisplay.style.border = "1px solid rgba(255, 255, 0, 0.3)";
+      statusDisplay.style.color = "white"; // Ensure text is white
 
       // Reset styling after 3 seconds
       setTimeout(() => {
         statusDisplay.style.backgroundColor = "";
         statusDisplay.style.border = "";
+        statusDisplay.style.color = ""; // Reset text color
       }, 3000);
     }
   }
