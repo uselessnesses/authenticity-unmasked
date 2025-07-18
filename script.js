@@ -882,16 +882,35 @@ class VoiceRecorder {
       <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #fff; font-family: Arial, sans-serif;">
         <div>
           <h2 style="margin-bottom: 30px; font-size: 2rem;">Thank you for your time</h2>
-          <p id="countdown" style="font-size: 1.2rem; color: #ccc; margin-bottom: 20px;">Returning to home screen in 10 seconds...</p>
+          <p id="countdown" style="font-size: 1.2rem; color: #ccc; margin-bottom: 20px;">Returning to home screen in 5 seconds...</p>
           <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin: 20px auto; overflow: hidden;">
             <div id="progress-bar" style="width: 100%; height: 100%; background: #fff; border-radius: 2px; transition: width 0.1s linear;"></div>
           </div>
+          <button id="new-user-btn" style="
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+          ">I'm a new user - Start now</button>
         </div>
       </div>
     `;
 
-    // Auto-refresh after 10 seconds with countdown
-    let countdown = 10;
+    // Add new user button functionality
+    document.getElementById("new-user-btn").onclick = () => {
+      window.location.reload();
+    };
+
+    // Auto-refresh after 5 seconds with countdown
+    let countdown = 5;
     const countdownElement = document.getElementById("countdown");
     const progressBar = document.getElementById("progress-bar");
 
@@ -900,7 +919,7 @@ class VoiceRecorder {
       countdownElement.textContent = `Returning to home screen in ${countdown} seconds...`;
 
       // Update progress bar
-      const progress = (countdown / 10) * 100;
+      const progress = (countdown / 5) * 100;
       progressBar.style.width = `${progress}%`;
 
       if (countdown <= 0) {
