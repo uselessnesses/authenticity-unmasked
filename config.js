@@ -3,7 +3,7 @@
 
 const AZURE_CONFIG = {
   // Server URL for file uploads (your backend server)
-  SERVER_URL: "http://localhost:3000", // Change this to your deployed server URL
+  SERVER_URL: "https://authenticity-unmasked-production.up.railway.app", // Change this to your deployed server URL
 
   // GitHub Pages URL for reference
   REDIRECT_URI: "https://uselessnesses.github.io/authenticity-unmasked",

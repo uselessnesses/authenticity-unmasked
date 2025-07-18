@@ -1,0 +1,12 @@
+# nixpacks.toml - Railway configuration
+[variables]
+NODE_ENV = "production"
+
+[phases.build]
+cmds = ["npm ci"]
+
+[phases.start]
+cmd = "node server.js"
+
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
