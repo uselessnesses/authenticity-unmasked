@@ -549,14 +549,20 @@ class VoiceRecorder {
       const questionText = this.questions[questionIndex] || "unknown-question";
       const pageName = window.PAGE_CONFIG?.pageName || "Exhibition-Questions";
 
+      // Get CSV position for this question
+      const csvPosition = this.getQuestionCSVPosition(questionIndex, pageName);
+
       // Create FormData for file upload
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.mp3");
       formData.append("questionIndex", questionIndex + 1);
       formData.append("questionText", questionText);
       formData.append("pageName", pageName);
+      formData.append("csvPosition", csvPosition);
 
-      console.log(`Uploading to server: ${serverUrl}/upload (${pageName})`);
+      console.log(
+        `Uploading to server: ${serverUrl}/upload (${pageName}, CSV: ${csvPosition})`
+      );
 
       const response = await fetch(`${serverUrl}/upload`, {
         method: "POST",
@@ -692,6 +698,32 @@ class VoiceRecorder {
     }
   }
 
+  getQuestionCSVPosition(questionIndex, pageName) {
+    // Map page names to CSV column letters and calculate row position
+    const columnMapping = {
+      "Kinnari-Saraiya": "A",
+      dmstfctn: "B",
+      "Georgia-Gardner": "C",
+      "Exhibition-Questions": "D-G", // Multiple columns for exhibition questions
+    };
+
+    const columnLetter = columnMapping[pageName] || "X";
+
+    // Row numbers start from 2 (row 1 is headers)
+    const rowNumber = questionIndex + 2;
+
+    // For exhibition questions, distribute across columns D-G
+    if (pageName === "Exhibition-Questions") {
+      const exhibitionColumns = ["D", "E", "F", "G"];
+      const columnIndex = questionIndex % exhibitionColumns.length;
+      const adjustedRow =
+        Math.floor(questionIndex / exhibitionColumns.length) + 2;
+      return `${exhibitionColumns[columnIndex]}${adjustedRow}`;
+    }
+
+    return `${columnLetter}${rowNumber}`;
+  }
+
   shuffleQuestions() {
     for (let i = this.questions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -708,35 +740,41 @@ class VoiceRecorder {
       return;
     }
 
-    // For small question sets, track more history to avoid patterns
-    const maxRecentQuestions = Math.min(this.questions.length - 1, 3);
+    // For 2 questions, just alternate. For more questions, avoid recent ones.
+    if (this.questions.length === 2) {
+      // Simple alternation for 2 questions
+      this.currentQuestionIndex = this.currentQuestionIndex === 0 ? 1 : 0;
+    } else {
+      // For 3+ questions, use recent question tracking
+      const maxRecentQuestions = Math.min(this.questions.length - 1, 2);
 
-    // Create array of all possible indices except recent ones
-    const availableIndices = [];
-    for (let i = 0; i < this.questions.length; i++) {
-      if (!this.recentQuestions.includes(i)) {
-        availableIndices.push(i);
-      }
-    }
-
-    // If no available indices (all questions are recent), reset and exclude only current
-    if (availableIndices.length === 0) {
-      this.recentQuestions = [this.currentQuestionIndex];
+      // Create array of all possible indices except recent ones
+      const availableIndices = [];
       for (let i = 0; i < this.questions.length; i++) {
-        if (i !== this.currentQuestionIndex) {
+        if (!this.recentQuestions.includes(i)) {
           availableIndices.push(i);
         }
       }
-    }
 
-    // Select randomly from available indices
-    const randomIndex = Math.floor(Math.random() * availableIndices.length);
-    this.currentQuestionIndex = availableIndices[randomIndex];
+      // If no available indices (all questions are recent), reset and exclude only current
+      if (availableIndices.length === 0) {
+        this.recentQuestions = [this.currentQuestionIndex];
+        for (let i = 0; i < this.questions.length; i++) {
+          if (i !== this.currentQuestionIndex) {
+            availableIndices.push(i);
+          }
+        }
+      }
 
-    // Add to recent questions and maintain size limit
-    this.recentQuestions.push(this.currentQuestionIndex);
-    if (this.recentQuestions.length > maxRecentQuestions) {
-      this.recentQuestions.shift(); // Remove oldest
+      // Select randomly from available indices
+      const randomIndex = Math.floor(Math.random() * availableIndices.length);
+      this.currentQuestionIndex = availableIndices[randomIndex];
+
+      // Add to recent questions and maintain size limit
+      this.recentQuestions.push(this.currentQuestionIndex);
+      if (this.recentQuestions.length > maxRecentQuestions) {
+        this.recentQuestions.shift(); // Remove oldest
+      }
     }
 
     console.log(

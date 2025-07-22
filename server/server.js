@@ -203,15 +203,18 @@ app.post("/upload", upload.single("audio"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Get pageName from the request
+    // Get pageName and CSV position from the request
     const pageName = req.body.pageName || "unknown";
-    console.log(`Received upload request for page: ${pageName}`);
+    const csvPosition = req.body.csvPosition || "X0";
+    console.log(
+      `Received upload request for page: ${pageName}, CSV position: ${csvPosition}`
+    );
 
     // Create a timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 
-    // Generate filename with pageName for identification
-    const filename = `${pageName}_${timestamp}_recording.mp3`;
+    // Generate filename with CSV position for identification
+    const filename = `${csvPosition}_${pageName}_${timestamp}_recording.mp3`;
 
     console.log(`Uploading file: ${filename}`);
 
