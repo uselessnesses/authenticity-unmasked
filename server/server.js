@@ -86,12 +86,33 @@ async function getAccessToken() {
 }
 
 // Upload file to OneDrive
-async function uploadToOneDrive(fileBuffer, filename, mimeType) {
+async function uploadToOneDrive(
+  fileBuffer,
+  filename,
+  mimeType,
+  folderName = "Exhibition-Recordings"
+) {
   try {
     const token = await getAccessToken();
 
-    // Create the upload URL - uploads to your OneDrive
-    const uploadUrl = `https://graph.microsoft.com/v1.0/users/${process.env.AZURE_USER_ID}/drive/root:/Exhibition-Recordings/${filename}:/content`;
+    // Map pageNames to descriptive folder names
+    const folderMapping = {
+      "Exhibition-Questions": "Exhibition-Questions",
+      "Kinnari-Saraiya": "Kinnari-Saraiya",
+      dmstfctn: "dmstfctn",
+      "Georgia-Gardner": "Georgia-Gardner",
+    };
+
+    // Get the mapped folder name or use the original if not found
+    const mappedFolderName = folderMapping[folderName] || folderName;
+
+    // Create folder path based on interface
+    const folderPath = `Exhibition-Recordings/${mappedFolderName}`;
+
+    // Create the upload URL - uploads to your OneDrive in specific folder
+    const uploadUrl = `https://graph.microsoft.com/v1.0/users/${process.env.AZURE_USER_ID}/drive/root:/${folderPath}/${filename}:/content`;
+
+    console.log(`Uploading to OneDrive folder: ${folderPath}/${filename}`);
 
     const response = await fetch(uploadUrl, {
       method: "PUT",
@@ -179,52 +200,39 @@ app.get("/auth/callback", async (req, res) => {
 app.post("/upload", upload.single("audio"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No audio file provided" });
+      return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const { questionIndex, questionText, pageName } = req.body;
+    // Get pageName from the request
+    const pageName = req.body.pageName || "unknown";
+    console.log(`Received upload request for page: ${pageName}`);
 
-    // Create filename with page name
+    // Create a timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const safeQuestionText = (questionText || "unknown-question")
-      .replace(/[^a-zA-Z0-9\s]/g, "")
-      .replace(/\s+/g, "-")
-      .toLowerCase()
-      .substring(0, 50);
 
-    const safePageName = (pageName || "Exhibition-Questions")
-      .replace(/[^a-zA-Z0-9\s-]/g, "")
-      .replace(/\s+/g, "-");
+    // Generate filename with pageName for identification
+    const filename = `${pageName}_${timestamp}_recording.webm`;
 
-    const filename = `${safePageName}-voice-q${
-      questionIndex || "unknown"
-    }-${safeQuestionText}-${timestamp}.mp3`;
+    console.log(`Uploading file: ${filename}`);
 
-    console.log(
-      `Uploading file: ${filename} (${req.file.size} bytes) from ${pageName}`
-    );
-
-    // Upload to OneDrive
-    const result = await uploadToOneDrive(
+    // Upload to OneDrive with pageName as folder
+    const uploadResult = await uploadToOneDrive(
       req.file.buffer,
       filename,
-      req.file.mimetype
+      req.file.mimetype,
+      pageName // Pass pageName as folder name
     );
-
-    console.log(`Upload successful: ${filename}`);
 
     res.json({
       success: true,
       filename: filename,
-      size: req.file.size,
-      oneDriveUrl: result.webUrl,
-      uploadedAt: new Date().toISOString(),
+      driveItem: uploadResult,
     });
   } catch (error) {
     console.error("Upload error:", error);
     res.status(500).json({
       error: "Upload failed",
-      message: error.message,
+      details: error.message,
     });
   }
 });
