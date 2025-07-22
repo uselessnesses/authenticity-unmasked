@@ -17,6 +17,7 @@ class VoiceRecorder {
     this.inactivityTimer = null; // Add inactivity timer for consent expiry
     this.audioContext = null;
     this.stream = null;
+    this.recentQuestions = []; // Track recent questions to avoid immediate repetition
 
     // Load questions based on page configuration
     this.initializeQuestions();
@@ -26,6 +27,7 @@ class VoiceRecorder {
     this.currentQuestionIndex = Math.floor(
       Math.random() * this.questions.length
     );
+    this.recentQuestions.push(this.currentQuestionIndex);
 
     // Initialize the app with server-based uploads (no authentication needed on client)
     this.initializeApp();
@@ -701,23 +703,46 @@ class VoiceRecorder {
   }
 
   moveToNextQuestion() {
-    // Select a truly random question index
-    const previousQuestionIndex = this.currentQuestionIndex;
-
     // If we only have one question, we can't avoid repetition
     if (this.questions.length <= 1) {
       return;
     }
 
-    // Keep selecting random questions until we get a different one
-    do {
-      this.currentQuestionIndex = Math.floor(
-        Math.random() * this.questions.length
-      );
-    } while (this.currentQuestionIndex === previousQuestionIndex);
+    // For small question sets, track more history to avoid patterns
+    const maxRecentQuestions = Math.min(this.questions.length - 1, 3);
+
+    // Create array of all possible indices except recent ones
+    const availableIndices = [];
+    for (let i = 0; i < this.questions.length; i++) {
+      if (!this.recentQuestions.includes(i)) {
+        availableIndices.push(i);
+      }
+    }
+
+    // If no available indices (all questions are recent), reset and exclude only current
+    if (availableIndices.length === 0) {
+      this.recentQuestions = [this.currentQuestionIndex];
+      for (let i = 0; i < this.questions.length; i++) {
+        if (i !== this.currentQuestionIndex) {
+          availableIndices.push(i);
+        }
+      }
+    }
+
+    // Select randomly from available indices
+    const randomIndex = Math.floor(Math.random() * availableIndices.length);
+    this.currentQuestionIndex = availableIndices[randomIndex];
+
+    // Add to recent questions and maintain size limit
+    this.recentQuestions.push(this.currentQuestionIndex);
+    if (this.recentQuestions.length > maxRecentQuestions) {
+      this.recentQuestions.shift(); // Remove oldest
+    }
 
     console.log(
-      `Question changed from ${previousQuestionIndex} to ${this.currentQuestionIndex}`
+      `Question changed to index: ${
+        this.currentQuestionIndex
+      }, recent: [${this.recentQuestions.join(", ")}]`
     );
   }
 
