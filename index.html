@@ -139,26 +139,24 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v2.3.0</span>
+      <span id="version-text">v0.45</span>
     </div>
 
-    <!-- No longer need MSAL library for service authentication -->
     <script src="config.js"></script>
     <script src="script.js"></script>
     <script>
       // --- GitHub Commit Info Display ---
       document.addEventListener("DOMContentLoaded", function () {
-        // TODO: Update these with your actual GitHub details when you create the repo
-        const username = "uselessnesses"; // CHANGE to your GitHub username
-        const repo = "authenticity-unmasked"; // CHANGE to your repo name
+        const username = "uselessnesses";
+        const repo = "authenticity-unmasked";
         const branch = "main";
         const versionDisplay = document.getElementById("version-display");
         const versionText = document.getElementById("version-text");
 
         if (!versionDisplay || !versionText) return;
 
-        // Ensure AZURE_CONFIG is available
-        const version = window.AZURE_CONFIG?.MANUAL_VERSION || "0.40";
+        // Get version from config
+        const version = window.AZURE_CONFIG?.VERSION || "0.45";
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 
