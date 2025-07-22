@@ -4,23 +4,37 @@
 
 **Live Exhibition Interface:** https://uselessnesses.github.io/authenticity-unmasked
 
+## 🎯 Available Interfaces
+
+- **[Kinnari Saraiya](https://uselessnesses.github.io/authenticity-unmasked/kinnari-saraiya.html)** - Artist-specific questions
+- **[dmstfctn](https://uselessnesses.github.io/authenticity-unmasked/dmstfctn.html)** - Artist-specific questions  
+- **[Georgia Gardner](https://uselessnesses.github.io/authenticity-unmasked/georgia-gardner.html)** - Artist-specific questions
+- **[Exhibition Questions](https://uselessnesses.github.io/authenticity-unmasked/exhibition-questions.html)** - General exhibition feedback
+
 ## 📁 Project Structure
 
 ```
 authenticity-unmasked/
-├── index.html              # Exhibition interface
-├── script.js               # Voice recording logic  
-├── styles.css              # Interface styling
-├── config.js               # Server configuration
-├── manifest.json           # PWA settings
-├── sw.js                   # Offline functionality
-├── server/                 # Backend (deployed to Railway)
-│   ├── server.js           # OneDrive upload server
-│   ├── package.json        # Server dependencies
-│   └── .env                # Server credentials (private)
-└── docs/                   # Documentation
-    ├── SETUP_INSTRUCTIONS.md # Detailed setup guide
-    └── SERVER_SETUP.md      # Server deployment guide
+├── index.html                      # Directory page
+├── kinnari-saraiya.html            # Kinnari Saraiya interface
+├── dmstfctn.html                   # dmstfctn interface
+├── georgia-gardner.html            # Georgia Gardner interface  
+├── exhibition-questions.html       # General questions interface
+├── script.js                       # Shared recording logic
+├── styles.css                      # Shared styling
+├── questions-data.js               # All question sets
+├── config-*.js                     # Page-specific configs
+├── config.js                       # Server configuration
+├── manifest.json                   # PWA settings
+├── sw.js                           # Offline functionality
+├── server/                         # Backend (deployed to Railway)
+│   ├── server.js                   # OneDrive upload server
+│   ├── package.json                # Server dependencies
+│   └── .env                        # Server credentials (private)
+└── docs/                           # Documentation
+    ├── Questions.csv               # Source question data
+    ├── SETUP_INSTRUCTIONS.md      # Detailed setup guide
+    └── SERVER_SETUP.md             # Server deployment guide
 ```
 
 ## 🚀 How It Works
@@ -44,6 +58,23 @@ authenticity-unmasked/
 - Deployed on Railway cloud platform
 
 ## 📝 For Developers
+
+### Updating Questions
+
+**To update questions from CSV:**
+
+```bash
+# 1. Edit docs/Questions.csv
+# 2. Run the update script
+npm run update-questions
+
+# 3. Deploy changes  
+git add .
+git commit -m "Update questions from CSV"
+git push origin main
+```
+
+**The questions will automatically update on all interfaces!**
 
 ### Making Client Changes
 1. Edit files in root directory

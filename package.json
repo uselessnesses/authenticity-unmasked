@@ -1,0 +1,18 @@
+{
+  "name": "authenticity-unmasked-client",
+  "version": "0.50.0",
+  "description": "Voice recording interface for exhibition feedback",
+  "scripts": {
+    "update-questions": "node scripts/update-questions.js",
+    "test-questions": "node scripts/update-questions.js && echo 'Questions updated successfully'",
+    "dev": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uselessnesses/authenticity-unmasked.git"
+  },
+  "keywords": ["voice", "recording", "exhibition", "feedback", "pwa"],
+  "author": "Dr Caterina Moruzzi",
+  "license": "MIT"
+}

@@ -17,25 +17,48 @@ class VoiceRecorder {
     this.inactivityTimer = null; // Add inactivity timer for consent expiry
     this.audioContext = null;
     this.stream = null;
-    this.questions = [
-      "How has this exhibition influenced your perception of AI and its role in shaping authentic human experiences?",
-      "Do you feel more optimistic or more concerned about AI after experiencing this exhibition? Why?",
-      'What does "authenticity" mean to you in an age where AI can create art, music, and even mimic people?',
-      "Has the exhibition challenged or reinforced your previous beliefs about AI and its creative potential?",
-      "In what ways did the exhibition make you reflect on what is real versus what is generated or simulated?",
-      "What emotions did you feel while engaging with the exhibition? Awe, unease, curiosity, hope...?",
-      "Did any particular part of the exhibition make you question the boundaries between human and machine creativity?",
-      "Do you see a place for AI in your own creative or personal life after visiting this exhibition?",
-      'What, if anything, felt particularly "authentic" to you in the experience—despite the involvement of AI?',
-      "Do you think AI enhances or diminishes authenticity in art and culture? Why?",
-      "What questions are you leaving with that you didn't have before visiting this exhibition?",
-    ];
+
+    // Load questions based on page configuration
+    this.initializeQuestions();
 
     // Shuffle questions and pick a random starting question
     this.shuffleQuestions();
     this.currentQuestionIndex = Math.floor(
       Math.random() * this.questions.length
     );
+
+    // Initialize the app with server-based uploads (no authentication needed on client)
+    this.initializeApp();
+  }
+
+  initializeQuestions() {
+    // Get the question set from page configuration
+    const questionSet =
+      window.PAGE_CONFIG?.questionSet || "Exhibition-Questions";
+
+    // Load questions from the data file
+    if (window.QUESTION_DATA && window.QUESTION_DATA[questionSet]) {
+      this.questions = [...window.QUESTION_DATA[questionSet]].filter(
+        (q) => q && q.trim()
+      );
+    } else {
+      // Fallback questions if configuration fails
+      console.warn(
+        `Question set "${questionSet}" not found, using fallback questions`
+      );
+      this.questions = [
+        "What does authenticity mean to you in the context of digital media?",
+        "How do you determine if digital content is authentic or not?",
+        "What responsibilities do creators have regarding authenticity?",
+      ];
+    }
+
+    // Ensure we have at least one question
+    if (this.questions.length === 0) {
+      this.questions = ["Please share your thoughts about the exhibition."];
+    }
+
+    console.log(`Loaded ${this.questions.length} questions for ${questionSet}`);
 
     // Initialize the app with server-based uploads (no authentication needed on client)
     this.initializeApp();
@@ -522,14 +545,16 @@ class VoiceRecorder {
 
       // Create filename info
       const questionText = this.questions[questionIndex] || "unknown-question";
+      const pageName = window.PAGE_CONFIG?.pageName || "Exhibition-Questions";
 
       // Create FormData for file upload
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.mp3");
       formData.append("questionIndex", questionIndex + 1);
       formData.append("questionText", questionText);
+      formData.append("pageName", pageName);
 
-      console.log(`Uploading to server: ${serverUrl}/upload`);
+      console.log(`Uploading to server: ${serverUrl}/upload (${pageName})`);
 
       const response = await fetch(`${serverUrl}/upload`, {
         method: "POST",
@@ -565,12 +590,13 @@ class VoiceRecorder {
       // Fallback: create download link for manual saving
       const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const questionText = this.questions[questionIndex] || "unknown-question";
+      const pageName = window.PAGE_CONFIG?.pageName || "Exhibition-Questions";
       const safeQuestionText = questionText
         .replace(/[^a-zA-Z0-9\s]/g, "")
         .replace(/\s+/g, "-")
         .toLowerCase()
         .substring(0, 50);
-      const fallbackFilename = `exhibition-voice-q${
+      const fallbackFilename = `${pageName}-voice-q${
         questionIndex + 1
       }-${safeQuestionText}-${safeTimestamp}.mp3`;
 

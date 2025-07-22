@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>Voice Recording Interface</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Voice Recorder" />
+    <meta name="format-detection" content="telephone=no" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="single-question-container">
+        <div class="question-and-skip-container">
+          <div class="question-display">
+            <h2 id="current-question">Loading question...</h2>
+          </div>
+          <button class="skip-btn" id="skip-question-btn" title="Skip Question">
+            <span class="skip-text">Skip Question</span>
+            <span class="skip-arrow">→</span>
+          </button>
+        </div>
+
+        <button class="record-btn" id="main-record-btn">
+          <span class="btn-text">Tap to Record Your Response</span>
+          <span class="recording-indicator"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Continue to Another Question Modal -->
+    <div id="continue-modal" class="modal">
+      <div class="modal-content">
+        <h3>Thank you for your response!</h3>
+        <p>Would you like to respond to another question?</p>
+        <div class="modal-buttons">
+          <button id="continue-yes" class="consent-btn">Yes</button>
+          <button id="continue-no" class="consent-btn">No, Thank you</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GDPR Consent Modal -->
+    <div id="gdpr-modal" class="modal">
+      <div class="modal-content consent-modal">
+        <h3>
+          Authenticity Unmasked: Unveiling AI-Driven Realities Through Art
+        </h3>
+        <div class="consent-text">
+          <p>
+            Thank you for your interest in sharing your thoughts on the
+            exhibition Authenticity Unmasked: Unveiling AI-Driven Realities
+            Through Art.
+          </p>
+          <p>
+            This exhibition forms part of a research project led by Dr Caterina
+            Moruzzi at the University of Edinburgh, in collaboration with Adobe
+            and the Content Authenticity Initiative (CAI). It investigates how
+            people perceive and engage with questions of authenticity in the
+            context of AI-generated content. This research is supported by the
+            Bridging Responsible AI Divides (BRAID) programme with funding from
+            the Arts and Humanities Research Council [grant number
+            AH/X007146/1]. You can find more information about the project here:
+            <a href="https://crea-tec.weebly.com/" target="_blank"
+              >https://crea-tec.weebly.com/</a
+            >
+          </p>
+          <p>
+            As part of this study, supported by the Arts and Humanities Research
+            Council, we invite you to provide feedback. Your input will help us
+            understand what kind of information audiences find valuable when
+            assessing the authenticity of digital content, and will inform
+            future tools and policies for content provenance and authenticity
+            standards.
+          </p>
+          <ul>
+            <li>
+              Participation is voluntary, and you may withdraw at any time.
+            </li>
+            <li>
+              Your responses will remain anonymous, and no personal data will be
+              collected.
+            </li>
+            <li>
+              Feedback may be used in academic publications or reports, without
+              identifying you.
+            </li>
+            <li>
+              If you choose to leave voice feedback, it will be transcribed and
+              pseudonymised.
+            </li>
+          </ul>
+          <p>
+            You will be asked one question at a time, with the option to skip or
+            continue. For artwork-specific reflections, you can respond using
+            the postcards available at the desk or by scanning the individual QR
+            codes on the leaflet—one per artwork. A separate QR code is also
+            available for general feedback. All forms can be completed during
+            your visit or later, at your convenience.
+          </p>
+          <p>
+            A more detailed printed information sheet is available at the front
+            desk. For any questions, contact:
+            <a href="mailto:cmoruzzi@ed.ac.uk">cmoruzzi@ed.ac.uk</a>.
+          </p>
+          <p>
+            <strong>By clicking "I agree" below, you confirm that:</strong>
+          </p>
+          <ul>
+            <li>You have read and understood this information.</li>
+            <li>You voluntarily agree to take part in this study.</li>
+          </ul>
+        </div>
+        <div class="modal-buttons">
+          <button id="consent-yes" class="consent-btn">I agree</button>
+          <button id="consent-no" class="consent-btn">I do not agree</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recording Status -->
+    <div id="status-display" class="status-hidden">
+      <div class="status-content">
+        <div class="pulse-animation"></div>
+        <p id="status-text">Ready to record...</p>
+      </div>
+    </div>
+
+    <!-- Version Display -->
+    <div id="version-display">
+      <span id="version-text">v0.45</span>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // --- GitHub Commit Info Display ---
+      document.addEventListener("DOMContentLoaded", function () {
+        const username = "uselessnesses";
+        const repo = "authenticity-unmasked";
+        const branch = "main";
+        const versionDisplay = document.getElementById("version-display");
+        const versionText = document.getElementById("version-text");
+
+        if (!versionDisplay || !versionText) return;
+
+        // Get version from config
+        const version = window.AZURE_CONFIG?.VERSION || "0.45";
+        const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
+        const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
+
+        // Store full version info
+        let fullVersionInfo = `v${version}, ${buildDate || "N/A"}, ${
+          buildTime || "N/A"
+        }, Built locally`;
+        let shortVersionInfo = `v${version}`;
+
+        // Set initial display to short version
+        versionText.textContent = shortVersionInfo;
+
+        // Add hover and click functionality
+        let isExpanded = false;
+
+        versionDisplay.addEventListener("mouseenter", () => {
+          if (!isExpanded) {
+            versionText.textContent = fullVersionInfo;
+          }
+        });
+
+        versionDisplay.addEventListener("mouseleave", () => {
+          if (!isExpanded) {
+            versionText.textContent = shortVersionInfo;
+          }
+        });
+
+        versionDisplay.addEventListener("click", () => {
+          isExpanded = !isExpanded;
+          versionText.textContent = isExpanded
+            ? fullVersionInfo
+            : shortVersionInfo;
+        });
+
+        // Try to fetch GitHub commit info
+        fetch(
+          `https://api.github.com/repos/${username}/${repo}/commits?sha=${branch}&per_page=1`
+        )
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            const commit =
+              Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+            if (
+              commit &&
+              commit.commit &&
+              commit.commit.author &&
+              commit.commit.author.date
+            ) {
+              // Parse the commit date
+              const commitDate = new Date(commit.commit.author.date);
+              const publishDate = commitDate
+                .toLocaleDateString("en-GB", {
+                  month: "2-digit",
+                  day: "2-digit",
+                })
+                .replace(/\//g, "-");
+
+              const publishTime = commitDate.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+
+              const msg = commit.commit.message.split("\n")[0];
+
+              // Update version info with GitHub data
+              fullVersionInfo = `v${version}, ${publishDate}, ${publishTime}, ${msg}`;
+              shortVersionInfo = `v${version}`;
+
+              // Update display based on current state
+              versionText.textContent = isExpanded
+                ? fullVersionInfo
+                : shortVersionInfo;
+            } else {
+              // Keep the fallback data already set
+              versionText.textContent = isExpanded
+                ? fullVersionInfo
+                : shortVersionInfo;
+            }
+          })
+          .catch((error) => {
+            console.log("GitHub API unavailable:", error.message);
+            // Keep the fallback data already set
+            versionText.textContent = isExpanded
+              ? fullVersionInfo
+              : shortVersionInfo;
+          });
+      });
+    </script>
+  </body>
+</html>

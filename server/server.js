@@ -182,9 +182,9 @@ app.post("/upload", upload.single("audio"), async (req, res) => {
       return res.status(400).json({ error: "No audio file provided" });
     }
 
-    const { questionIndex, questionText } = req.body;
+    const { questionIndex, questionText, pageName } = req.body;
 
-    // Create filename
+    // Create filename with page name
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const safeQuestionText = (questionText || "unknown-question")
       .replace(/[^a-zA-Z0-9\s]/g, "")
@@ -192,11 +192,17 @@ app.post("/upload", upload.single("audio"), async (req, res) => {
       .toLowerCase()
       .substring(0, 50);
 
-    const filename = `exhibition-voice-q${
+    const safePageName = (pageName || "Exhibition-Questions")
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+
+    const filename = `${safePageName}-voice-q${
       questionIndex || "unknown"
     }-${safeQuestionText}-${timestamp}.mp3`;
 
-    console.log(`Uploading file: ${filename} (${req.file.size} bytes)`);
+    console.log(
+      `Uploading file: ${filename} (${req.file.size} bytes) from ${pageName}`
+    );
 
     // Upload to OneDrive
     const result = await uploadToOneDrive(
