@@ -531,10 +531,10 @@ class VoiceRecorder {
 
   async convertToMp3(audioBlob) {
     // For production, you would use a library like lamejs or ffmpeg.wasm
-    // For now, we'll rename the file but keep the original format
-    // This is a placeholder for actual MP3 conversion
+    // For now, we'll change the MIME type to audio/mpeg so OneDrive treats it as an audio file
+    // The actual format is still WebM, but this makes it appear as audio in OneDrive
 
-    return new Blob([audioBlob], { type: "audio/mp3" });
+    return new Blob([audioBlob], { type: "audio/mpeg" });
   }
 
   async saveToOneDrive(audioBlob, questionIndex) {
