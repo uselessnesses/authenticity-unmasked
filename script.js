@@ -18,6 +18,7 @@ class VoiceRecorder {
     this.audioContext = null;
     this.stream = null;
     this.recentQuestions = []; // Track recent questions to avoid immediate repetition
+    this.isSkipping = false; // Add debounce flag for skip button
 
     // Load questions based on page configuration
     this.initializeQuestions();
@@ -796,20 +797,29 @@ class VoiceRecorder {
       return;
     }
 
+    // Prevent double-clicking/rapid clicking
+    if (this.isSkipping) {
+      console.log("Skip already in progress, ignoring duplicate click");
+      return;
+    }
+
     // Check if skip button is disabled
     const skipBtn = document.getElementById("skip-question-btn");
     if (skipBtn && skipBtn.disabled) {
       return;
     }
 
+    console.log(
+      `Before skip: currentQuestionIndex = ${
+        this.currentQuestionIndex
+      }, question = "${this.questions[this.currentQuestionIndex]}"`
+    );
+
+    // Set the debounce flag
+    this.isSkipping = true;
+
     const questionElement = document.getElementById("current-question");
     if (questionElement) {
-      console.log(
-        `Before skip: currentQuestionIndex = ${
-          this.currentQuestionIndex
-        }, question = "${this.questions[this.currentQuestionIndex]}"`
-      );
-
       // Add slide-out animation
       questionElement.classList.add("question-slide-out-right");
 
@@ -823,7 +833,15 @@ class VoiceRecorder {
           }, question = "${this.questions[this.currentQuestionIndex]}"`
         );
         this.loadRandomQuestion(true);
+
+        // Reset the debounce flag after animation completes
+        setTimeout(() => {
+          this.isSkipping = false;
+        }, 100);
       }, 400);
+    } else {
+      // If no question element, reset flag immediately
+      this.isSkipping = false;
     }
   }
 
