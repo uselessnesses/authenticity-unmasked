@@ -740,10 +740,15 @@ class VoiceRecorder {
       return;
     }
 
+    const previousIndex = this.currentQuestionIndex;
+
     // For 2 questions, just alternate. For more questions, avoid recent ones.
     if (this.questions.length === 2) {
       // Simple alternation for 2 questions
       this.currentQuestionIndex = this.currentQuestionIndex === 0 ? 1 : 0;
+      console.log(
+        `2-question alternation: ${previousIndex} → ${this.currentQuestionIndex}`
+      );
     } else {
       // For 3+ questions, use recent question tracking
       const maxRecentQuestions = Math.min(this.questions.length - 1, 2);
@@ -799,6 +804,12 @@ class VoiceRecorder {
 
     const questionElement = document.getElementById("current-question");
     if (questionElement) {
+      console.log(
+        `Before skip: currentQuestionIndex = ${
+          this.currentQuestionIndex
+        }, question = "${this.questions[this.currentQuestionIndex]}"`
+      );
+
       // Add slide-out animation
       questionElement.classList.add("question-slide-out-right");
 
@@ -806,6 +817,11 @@ class VoiceRecorder {
       setTimeout(() => {
         questionElement.classList.remove("question-slide-out-right");
         this.moveToNextQuestion();
+        console.log(
+          `After moveToNextQuestion: currentQuestionIndex = ${
+            this.currentQuestionIndex
+          }, question = "${this.questions[this.currentQuestionIndex]}"`
+        );
         this.loadRandomQuestion(true);
       }, 400);
     }
