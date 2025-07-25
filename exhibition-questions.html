@@ -44,6 +44,21 @@
       <div class="modal-content">
         <h3>Thank you for your response!</h3>
         <p>Would you like to respond to another question?</p>
+        <div
+          id="upload-status-indicator"
+          style="
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            text-align: center;
+          "
+        >
+          <span style="color: #fff; font-size: 0.9rem"
+            >💾 Saving your recording...</span
+          >
+        </div>
         <div class="modal-buttons">
           <button id="continue-yes" class="consent-btn">Yes</button>
           <button id="continue-no" class="consent-btn">No, Thank you</button>
@@ -146,7 +161,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v0.59.0</span>
+      <span id="version-text">v0.60.0</span>
     </div>
 
     <script src="config.js"></script>

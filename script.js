@@ -19,6 +19,9 @@ class VoiceRecorder {
     this.stream = null;
     this.recentQuestions = []; // Track recent questions to avoid immediate repetition
     this.isSkipping = false; // Add debounce flag for skip button
+    this.isUploading = false; // Track upload state to prevent navigation
+    this.pendingUploads = new Set(); // Track multiple uploads if needed
+    this.uploadCompleteCallback = null; // Callback for when upload finishes
 
     // Load questions based on page configuration
     this.initializeQuestions();
@@ -74,8 +77,30 @@ class VoiceRecorder {
     // Initialize recording buttons
     this.setupEventListeners();
 
+    // Add beforeunload protection to prevent data loss during uploads
+    this.setupUploadProtection();
+
     // Load a random question
     this.loadRandomQuestion();
+  }
+
+  setupUploadProtection() {
+    // Prevent page unload during uploads
+    window.addEventListener("beforeunload", (e) => {
+      if (this.isUploading || this.pendingUploads.size > 0) {
+        e.preventDefault();
+        e.returnValue =
+          "Your recording is still being saved. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    });
+
+    // Also prevent navigation during uploads
+    window.addEventListener("pagehide", (e) => {
+      if (this.isUploading || this.pendingUploads.size > 0) {
+        e.preventDefault();
+      }
+    });
   }
   showGDPRModal() {
     const modal = document.getElementById("gdpr-modal");
@@ -153,6 +178,36 @@ class VoiceRecorder {
 
     document.getElementById("continue-no")?.addEventListener("click", () => {
       this.resetInactivityTimer(); // Reset timer on user interaction
+
+      // Check if there are any pending uploads before allowing exit
+      if (this.isUploading || this.pendingUploads.size > 0) {
+        this.showStatus(
+          "Please wait while your recording is being saved...",
+          3000
+        );
+
+        // Set up callback to execute when upload completes
+        this.uploadCompleteCallback = () => {
+          this.hideContinueModal();
+          this.showThankYouAndExit();
+        };
+
+        // Disable the button temporarily to prevent multiple clicks
+        const continueNoBtn = document.getElementById("continue-no");
+        if (continueNoBtn) {
+          continueNoBtn.disabled = true;
+          continueNoBtn.textContent = "Saving...";
+
+          // Re-enable button after a timeout as fallback
+          setTimeout(() => {
+            continueNoBtn.disabled = false;
+            continueNoBtn.textContent = "No, Thank you";
+          }, 10000);
+        }
+
+        return;
+      }
+
       this.hideContinueModal();
       this.showThankYouAndExit();
     });
@@ -499,7 +554,13 @@ class VoiceRecorder {
   }
 
   async saveToOneDrive(audioBlob, questionIndex) {
+    const uploadId = `upload_${Date.now()}_${Math.random()}`;
+
     try {
+      // Mark upload as starting
+      this.isUploading = true;
+      this.pendingUploads.add(uploadId);
+
       this.showStatus("Uploading to OneDrive...");
 
       // Get server URL from config
@@ -576,6 +637,30 @@ class VoiceRecorder {
       this.createDownloadLink(audioBlob, fallbackFilename);
 
       throw error;
+    } finally {
+      // Always clean up upload state
+      this.pendingUploads.delete(uploadId);
+
+      // Check if all uploads are complete
+      if (this.pendingUploads.size === 0) {
+        this.isUploading = false;
+
+        // Execute any pending callback (like exit action)
+        if (this.uploadCompleteCallback) {
+          const callback = this.uploadCompleteCallback;
+          this.uploadCompleteCallback = null;
+
+          // Reset continue-no button state
+          const continueNoBtn = document.getElementById("continue-no");
+          if (continueNoBtn) {
+            continueNoBtn.disabled = false;
+            continueNoBtn.textContent = "No, Thank you";
+          }
+
+          // Execute the callback after a short delay to ensure UI updates
+          setTimeout(callback, 100);
+        }
+      }
     }
   }
 
@@ -807,7 +892,47 @@ class VoiceRecorder {
 
   showContinueModal() {
     const modal = document.getElementById("continue-modal");
+    const uploadIndicator = document.getElementById("upload-status-indicator");
     modal.style.display = "block";
+
+    // Check if upload is still in progress and update UI accordingly
+    const continueNoBtn = document.getElementById("continue-no");
+    if (this.isUploading || this.pendingUploads.size > 0) {
+      // Show upload indicator
+      if (uploadIndicator) {
+        uploadIndicator.style.display = "block";
+      }
+
+      if (continueNoBtn) {
+        continueNoBtn.textContent = "Saving...";
+        continueNoBtn.disabled = true;
+      }
+
+      // Set up a check to re-enable the button when upload completes
+      const checkUploadComplete = () => {
+        if (!this.isUploading && this.pendingUploads.size === 0) {
+          // Hide upload indicator
+          if (uploadIndicator) {
+            uploadIndicator.style.display = "none";
+          }
+
+          if (continueNoBtn) {
+            continueNoBtn.textContent = "No, Thank you";
+            continueNoBtn.disabled = false;
+          }
+        } else {
+          // Check again after a short delay
+          setTimeout(checkUploadComplete, 500);
+        }
+      };
+
+      setTimeout(checkUploadComplete, 500);
+    } else {
+      // Hide upload indicator if no uploads pending
+      if (uploadIndicator) {
+        uploadIndicator.style.display = "none";
+      }
+    }
 
     // Re-enable buttons when modal is shown
     this.enableButtons();
