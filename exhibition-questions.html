@@ -19,7 +19,7 @@
     <meta name="apple-mobile-web-app-title" content="Voice Recorder" />
     <meta name="format-detection" content="telephone=no" />
   </head>
-  <body>
+  <body class="exhibition-questions">
     <div class="container">
       <div class="single-question-container">
         <div class="question-and-skip-container">
@@ -72,17 +72,14 @@
             Bridging Responsible AI Divides (BRAID) programme with funding from
             the Arts and Humanities Research Council [grant number
             AH/X007146/1]. You can find more information about the project here:
-            <a href="https://crea-tec.weebly.com/" target="_blank"
-              >https://crea-tec.weebly.com/</a
-            >
+            https://crea-tec.weebly.com/
           </p>
           <p>
-            As part of this study, supported by the Arts and Humanities Research
-            Council, we invite you to provide feedback. Your input will help us
-            understand what kind of information audiences find valuable when
-            assessing the authenticity of digital content, and will inform
-            future tools and policies for content provenance and authenticity
-            standards.
+            As part of this study, we invite you to provide feedback. Your input
+            will help us understand what kind of information audiences find
+            valuable when assessing the authenticity of digital content and will
+            inform future tools and policies for content provenance and
+            authenticity standards.
           </p>
           <ul>
             <li>
@@ -111,8 +108,7 @@
           </p>
           <p>
             A more detailed printed information sheet is available at the front
-            desk. For any questions, contact:
-            <a href="mailto:cmoruzzi@ed.ac.uk">cmoruzzi@ed.ac.uk</a>.
+            desk. For any questions, contact: cmoruzzi@ed.ac.uk.
           </p>
           <p>
             <strong>By clicking "I agree" below, you confirm that:</strong>
@@ -139,7 +135,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v0.45</span>
+      <span id="version-text">v0.58</span>
     </div>
 
     <script src="config.js"></script>
@@ -158,7 +154,7 @@
         if (!versionDisplay || !versionText) return;
 
         // Get version from config
-        const version = window.AZURE_CONFIG?.VERSION || "0.45";
+        const version = window.AZURE_CONFIG?.VERSION || "0.58";
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 

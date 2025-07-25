@@ -357,11 +357,22 @@ body {
 .consent-text a {
   color: #66ccff;
   text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.consent-text a:hover {
+  text-decoration: underline;
+  color: #88ddff;
+}
+
+/* Make links non-clickable only on exhibition-questions page */
+body.exhibition-questions .consent-text a {
   pointer-events: none;
   cursor: default;
 }
 
-.consent-text a:hover {
+body.exhibition-questions .consent-text a:hover {
   text-decoration: none;
   color: #66ccff;
 }
