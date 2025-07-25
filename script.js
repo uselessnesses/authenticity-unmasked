@@ -959,6 +959,66 @@ class VoiceRecorder {
     }, 10000);
   }
 
+  showThankYouModal(message = "Thank you for your time!") {
+    // Clear any consent timers
+    if (this.consentTimer) {
+      clearTimeout(this.consentTimer);
+    }
+    if (this.sessionConsentTimer) {
+      clearTimeout(this.sessionConsentTimer);
+    }
+
+    // Reset all consent states immediately
+    this.hasConsent = false;
+    this.hasRecordingConsent = false;
+
+    // Get the thank you modal elements
+    const modal = document.getElementById("thank-you-modal");
+    const messageElement = document.getElementById("thank-you-message");
+    const countdownElement = document.getElementById("thank-you-countdown");
+    const refreshBtn = document.getElementById("thank-you-refresh-btn");
+
+    if (!modal) {
+      console.error("Thank you modal not found in HTML");
+      // Fallback to the old method
+      this.showThankYouAndExit();
+      return;
+    }
+
+    // Set the custom message
+    if (messageElement) {
+      messageElement.textContent = message;
+    }
+
+    // Show the modal
+    modal.style.display = "block";
+
+    // Set up refresh button if it exists
+    if (refreshBtn) {
+      refreshBtn.onclick = () => {
+        window.location.reload();
+      };
+    }
+
+    // Start countdown
+    let countdown = 7;
+    if (countdownElement) {
+      countdownElement.textContent = `Page will refresh automatically in ${countdown} seconds...`;
+    }
+
+    const timer = setInterval(() => {
+      countdown--;
+      if (countdownElement) {
+        countdownElement.textContent = `Page will refresh automatically in ${countdown} seconds...`;
+      }
+
+      if (countdown <= 0) {
+        clearInterval(timer);
+        window.location.reload();
+      }
+    }, 1000);
+  }
+
   showThankYouAndExit() {
     // Clear any consent timers
     if (this.consentTimer) {

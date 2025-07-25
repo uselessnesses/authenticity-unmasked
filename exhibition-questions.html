@@ -69,10 +69,39 @@
     <!-- Thank You Modal (for consent decline and session end) -->
     <div id="thank-you-modal" class="modal">
       <div class="modal-content">
-        <h3>Thank you for your time!</h3>
-        <p>We appreciate your interest in the exhibition.</p>
-        <div id="thank-you-countdown" class="countdown-text">
-          Returning to start in <span id="countdown-number">5</span> seconds...
+        <div style="text-align: center; padding: 20px">
+          <h2 style="margin-bottom: 20px">Thank you for your time</h2>
+          <p
+            id="thank-you-message"
+            style="margin-bottom: 10px; font-size: 1.1rem"
+          >
+            We appreciate your interest in the exhibition.
+          </p>
+          <p style="margin-bottom: 30px; font-size: 1.1rem">
+            You can press refresh to start again.
+          </p>
+          <button
+            id="thank-you-refresh-btn"
+            style="
+              background: #fff;
+              color: #000;
+              border: none;
+              padding: 15px 30px;
+              border-radius: 8px;
+              font-size: 1rem;
+              font-weight: 600;
+              cursor: pointer;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              transition: all 0.2s ease;
+              margin-bottom: 20px;
+            "
+          >
+            Refresh
+          </button>
+          <p id="thank-you-countdown" style="font-size: 0.9rem; color: #ccc">
+            Page will refresh automatically in 7 seconds...
+          </p>
         </div>
       </div>
     </div>
@@ -161,7 +190,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v0.60.0</span>
+      <span id="version-text">v0.61.0</span>
     </div>
 
     <script src="config.js"></script>
