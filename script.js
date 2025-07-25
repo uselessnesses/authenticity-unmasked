@@ -98,50 +98,10 @@ class VoiceRecorder {
       this.hasConsent = false;
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
-      // Don't allow access to the interface
-      document.body.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #fff; font-family: Arial, sans-serif;">
-          <div>
-            <h2 style="margin-bottom: 20px;">Thank you for your time</h2>
-            <p style="margin-bottom: 10px; font-size: 1.1rem;">You have chosen not to participate in this study.</p>
-            <p style="margin-bottom: 30px; font-size: 1.1rem;">You can press refresh to start again.</p>
-            <button id="refresh-btn" style="
-              background: #fff;
-              color: #000;
-              border: none;
-              padding: 15px 30px;
-              border-radius: 8px;
-              font-size: 1rem;
-              font-weight: 600;
-              cursor: pointer;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              transition: all 0.2s ease;
-              margin-bottom: 20px;
-            ">Refresh</button>
-            <p id="countdown" style="font-size: 0.9rem; color: #ccc;">Page will refresh automatically in 7 seconds...</p>
-          </div>
-        </div>
-      `;
-
-      // Add refresh button functionality
-      document.getElementById("refresh-btn").onclick = () => {
-        window.location.reload();
-      };
-
-      // Auto-refresh after 7 seconds
-      let countdown = 7;
-      const countdownElement = document.getElementById("countdown");
-
-      const timer = setInterval(() => {
-        countdown--;
-        countdownElement.textContent = `Page will refresh automatically in ${countdown} seconds...`;
-
-        if (countdown <= 0) {
-          clearInterval(timer);
-          window.location.reload();
-        }
-      }, 1000);
+      // Show thank you modal instead of replacing page content
+      this.showThankYouModal(
+        "You have chosen not to participate in this study."
+      );
     };
   }
   showRecordingConsent() {

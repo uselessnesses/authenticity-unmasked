@@ -51,6 +51,17 @@
       </div>
     </div>
 
+    <!-- Thank You Modal (for consent decline and session end) -->
+    <div id="thank-you-modal" class="modal">
+      <div class="modal-content">
+        <h3>Thank you for your time!</h3>
+        <p>We appreciate your interest in the exhibition.</p>
+        <div id="thank-you-countdown" class="countdown-text">
+          Returning to start in <span id="countdown-number">5</span> seconds...
+        </div>
+      </div>
+    </div>
+
     <!-- GDPR Consent Modal -->
     <div id="gdpr-modal" class="modal">
       <div class="modal-content consent-modal">
@@ -135,7 +146,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v0.58</span>
+      <span id="version-text">v0.59.0</span>
     </div>
 
     <script src="config.js"></script>
@@ -154,7 +165,7 @@
         if (!versionDisplay || !versionText) return;
 
         // Get version from config
-        const version = window.AZURE_CONFIG?.VERSION || "0.58";
+        const version = window.AZURE_CONFIG?.VERSION || "0.59";
         const buildDate = window.AZURE_CONFIG?.BUILD_DATE || "";
         const buildTime = window.AZURE_CONFIG?.BUILD_TIME || "";
 

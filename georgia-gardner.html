@@ -138,7 +138,7 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v0.45</span>
+      <span id="version-text">v0.59.0</span>
     </div>
 
     <script src="config.js"></script>
@@ -253,5 +253,43 @@
           });
       });
     </script>
+
+    <!-- Thank You Modal -->
+    <div id="thank-you-modal" class="modal">
+      <div class="modal-content">
+        <div style="text-align: center; padding: 20px">
+          <h2 style="margin-bottom: 20px">Thank you for your time</h2>
+          <p
+            id="thank-you-message"
+            style="margin-bottom: 10px; font-size: 1.1rem"
+          ></p>
+          <p style="margin-bottom: 30px; font-size: 1.1rem">
+            You can press refresh to start again.
+          </p>
+          <button
+            id="thank-you-refresh-btn"
+            style="
+              background: #fff;
+              color: #000;
+              border: none;
+              padding: 15px 30px;
+              border-radius: 8px;
+              font-size: 1rem;
+              font-weight: 600;
+              cursor: pointer;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              transition: all 0.2s ease;
+              margin-bottom: 20px;
+            "
+          >
+            Refresh
+          </button>
+          <p id="thank-you-countdown" style="font-size: 0.9rem; color: #ccc">
+            Page will refresh automatically in 7 seconds...
+          </p>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
