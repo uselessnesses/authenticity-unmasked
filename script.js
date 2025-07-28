@@ -82,9 +82,6 @@ class VoiceRecorder {
 
     // Load a random question
     this.loadRandomQuestion();
-
-    // Show GDPR modal immediately when page loads
-    this.showGDPRModal();
   }
 
   setupUploadProtection() {

@@ -69,37 +69,16 @@
     <!-- Thank You Modal (for consent decline and session end) -->
     <div id="thank-you-modal" class="modal">
       <div class="modal-content">
-        <div style="text-align: center; padding: 20px">
-          <h2 style="margin-bottom: 20px">Thank you for your time</h2>
-          <p
-            id="thank-you-message"
-            style="margin-bottom: 10px; font-size: 1.1rem"
-          >
-            We appreciate your interest in the exhibition.
-          </p>
-          <p
-            id="thank-you-countdown"
-            style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px"
-          >
-            Returning to start in 5 seconds...
-          </p>
-          <button
-            id="thank-you-refresh-btn"
-            style="
-              background: #fff;
-              color: #000;
-              border: none;
-              padding: 15px 30px;
-              border-radius: 8px;
-              font-size: 1rem;
-              font-weight: 600;
-              cursor: pointer;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              transition: all 0.2s ease;
-              margin-bottom: 20px;
-            "
-          >
+        <h3 id="thank-you-message">Thank you for your time!</h3>
+        <p>We appreciate your interest in the exhibition.</p>
+        <p
+          id="thank-you-countdown"
+          style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px"
+        >
+          Returning to start in 5 seconds...
+        </p>
+        <div class="modal-buttons">
+          <button id="thank-you-refresh-btn" class="consent-btn">
             I'm a new visitor - Start now
           </button>
         </div>
