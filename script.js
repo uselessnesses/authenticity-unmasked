@@ -148,10 +148,13 @@ class VoiceRecorder {
     };
 
     document.getElementById("consent-no").onclick = () => {
+      this.hasConsent = false;
       this.resetModalScroll(); // Reset scroll when closing
       modal.style.display = "none";
-      // Don't set hasRecordingConsent to false, just cancel this recording attempt
-      // Keep hasConsent false so they'll need to consent again
+      // Show thank you modal instead of just hiding modal
+      this.showThankYouModal(
+        "You have chosen not to participate in this study."
+      );
     };
   }
 
