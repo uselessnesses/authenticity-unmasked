@@ -82,6 +82,9 @@ class VoiceRecorder {
 
     // Load a random question
     this.loadRandomQuestion();
+
+    // Show GDPR modal immediately when page loads
+    this.showGDPRModal();
   }
 
   setupUploadProtection() {
@@ -1000,16 +1003,16 @@ class VoiceRecorder {
       };
     }
 
-    // Start countdown
-    let countdown = 7;
+    // Start countdown - 5 seconds for consent decline
+    let countdown = 5;
     if (countdownElement) {
-      countdownElement.textContent = `Page will refresh automatically in ${countdown} seconds...`;
+      countdownElement.textContent = `Returning to start in ${countdown} seconds...`;
     }
 
     const timer = setInterval(() => {
       countdown--;
       if (countdownElement) {
-        countdownElement.textContent = `Page will refresh automatically in ${countdown} seconds...`;
+        countdownElement.textContent = `Returning to start in ${countdown} seconds...`;
       }
 
       if (countdown <= 0) {
