@@ -450,8 +450,22 @@ body.exhibition-questions .consent-text a:hover {
   background: #555;
 }
 
-#consent-no:hover {
-  background: #555;
+/* Thank You Modal Styles - shared black background styling */
+#continue-modal .modal-content,
+#thank-you-modal .modal-content {
+  background-color: #000;
+  color: #fff;
+  border: 4px solid #fff;
+}
+
+#continue-modal .modal-content h3,
+#thank-you-modal .modal-content h3 {
+  color: #fff;
+}
+
+#continue-modal .modal-content p,
+#thank-you-modal .modal-content p {
+  color: #fff;
 }
 
 /* Status Display */

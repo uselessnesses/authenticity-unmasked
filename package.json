@@ -1,6 +1,6 @@
 {
   "name": "authenticity-unmasked-client",
-  "version": "0.62.1",
+  "version": "0.62.2",
   "description": "Voice recording interface for exhibition feedback",
   "scripts": {
     "update-questions": "node scripts/update-questions.js",
