@@ -9,9 +9,9 @@ const AZURE_CONFIG = {
   REDIRECT_URI: "https://uselessnesses.github.io/authenticity-unmasked",
 
   // Version info
-  VERSION: "0.62.2",
-  BUILD_DATE: "2025-07-28",
-  BUILD_TIME: "10:40",
+  VERSION: "0.62.3",
+  BUILD_DATE: "2025-07-31",
+  BUILD_TIME: "11:15",
 };
 
 // Export for use in main script
