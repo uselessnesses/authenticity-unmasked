@@ -159,13 +159,23 @@ class VoiceRecorder {
   }
 
   setupEventListeners() {
-    // Main recording button
+    console.log("🔗 Setting up event listeners...");
+
+    // Main recording button - remove existing listeners first to prevent duplicates
     const recordBtn = document.getElementById("main-record-btn");
     if (recordBtn) {
-      recordBtn.addEventListener("click", (e) => {
+      // Clone node to remove all event listeners
+      const newRecordBtn = recordBtn.cloneNode(true);
+      recordBtn.parentNode.replaceChild(newRecordBtn, recordBtn);
+
+      newRecordBtn.addEventListener("click", (e) => {
+        console.log("🖱️ Record button clicked");
         this.resetInactivityTimer(); // Reset timer on user interaction
         this.handleButtonClick(e);
       });
+      console.log("✅ Record button event listener attached");
+    } else {
+      console.log("⚠️ Record button not found");
     }
 
     // Continue modal buttons
@@ -281,28 +291,41 @@ class VoiceRecorder {
   }
 
   async handleRecordClick() {
-    console.log("Button clicked, isRecording:", this.isRecording);
+    console.log("🎙️ handleRecordClick() called");
+    console.log("📊 Current state:", {
+      isRecording: this.isRecording,
+      hasConsent: this.hasConsent,
+      mediaRecorderState: this.mediaRecorder?.state || "null",
+      audioChunksLength: this.audioChunks.length,
+      currentButtonExists: !!this.currentButton,
+    });
 
     if (!this.hasConsent) {
+      console.log("❌ No consent, showing GDPR modal");
       this.showGDPRModal();
+      return;
+    }
+
+    // Prevent double-clicking by checking if we're already in a recording process
+    if (
+      this.isRecording &&
+      this.mediaRecorder &&
+      this.mediaRecorder.state === "recording"
+    ) {
+      console.log("⚠️ Already recording, ignoring duplicate click");
       return;
     }
 
     const button = document.getElementById("main-record-btn");
     const questionIndex = this.currentQuestionIndex; // Use current question index as ID
 
-    console.log(
-      "Question Index:",
-      questionIndex,
-      "Current recording state:",
-      this.isRecording
-    );
+    console.log("🔢 Question Index:", questionIndex, "Button found:", !!button);
 
     if (!this.isRecording) {
-      console.log("Starting recording...");
+      console.log("▶️ Starting new recording...");
       await this.startRecording(button, questionIndex);
     } else {
-      console.log("Stopping recording...");
+      console.log("⏹️ Stopping current recording...");
       await this.stopRecording();
     }
   }
@@ -329,7 +352,26 @@ class VoiceRecorder {
   }
 
   async startRecording(button, buttonId) {
+    console.log("🚀 startRecording() called", {
+      buttonId,
+      hasButton: !!button,
+    });
+
     try {
+      // Ensure we're fully cleaned up before starting
+      if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+        console.log("⚠️ Found active MediaRecorder, stopping it first");
+        this.mediaRecorder.stop();
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Brief delay
+      }
+
+      if (this.stream) {
+        console.log("⚠️ Found existing stream, closing it first");
+        this.stream.getTracks().forEach((track) => track.stop());
+        this.stream = null;
+      }
+
+      console.log("🎤 Requesting microphone access...");
       // Request fresh stream with better constraints
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -342,6 +384,7 @@ class VoiceRecorder {
         },
       });
 
+      console.log("✅ Microphone access granted, setting up recording...");
       this.audioChunks = [];
       this.currentButton = button;
       this.isRecording = true;
@@ -358,26 +401,39 @@ class VoiceRecorder {
         options = {}; // Use default
       }
 
+      console.log("🔧 Creating MediaRecorder with options:", options);
       this.mediaRecorder = new MediaRecorder(this.stream, options);
 
       // Add better event handling
       this.mediaRecorder.ondataavailable = (event) => {
-        console.log("Audio data received:", event.data.size, "bytes");
+        console.log(
+          "📊 Audio data received:",
+          event.data.size,
+          "bytes",
+          "Total chunks:",
+          this.audioChunks.length + 1
+        );
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
+        } else {
+          console.log("⚠️ Received empty audio chunk");
         }
       };
 
       this.mediaRecorder.onstop = () => {
-        console.log(
-          "Recording stopped, total chunks:",
-          this.audioChunks.length
-        );
+        console.log("⏹️ MediaRecorder stopped. Processing recording...", {
+          totalChunks: this.audioChunks.length,
+          totalSize: this.audioChunks.reduce(
+            (size, chunk) => size + chunk.size,
+            0
+          ),
+          buttonId: buttonId,
+        });
         this.processRecording(buttonId);
       };
 
       this.mediaRecorder.onerror = (event) => {
-        console.error("MediaRecorder error:", event.error);
+        console.error("❌ MediaRecorder error:", event.error);
         this.showStatus("Recording error occurred", 3000);
         this.resetButton();
       };
@@ -500,8 +556,21 @@ class VoiceRecorder {
   }
 
   async processRecording(buttonId) {
+    console.log("🔄 processRecording() called", {
+      buttonId,
+      chunksLength: this.audioChunks.length,
+      isUploading: this.isUploading,
+    });
+
+    // Prevent duplicate processing
+    if (this.isUploading) {
+      console.log("⚠️ Already processing/uploading, ignoring duplicate call");
+      return;
+    }
+
     // Disable buttons immediately to prevent double-clicking
     this.disableButtons();
+    this.isUploading = true;
 
     try {
       // Check if we have any audio data
@@ -513,39 +582,42 @@ class VoiceRecorder {
         (size, chunk) => size + chunk.size,
         0
       );
-      console.log(
-        "Processing recording:",
-        this.audioChunks.length,
-        "chunks, total size:",
-        totalSize,
-        "bytes"
-      );
+      console.log("📊 Processing recording:", {
+        chunks: this.audioChunks.length,
+        totalSize: totalSize,
+        buttonId: buttonId,
+      });
 
       if (totalSize === 0) {
         throw new Error("Audio recording is empty");
       }
 
       const audioBlob = new Blob(this.audioChunks, { type: "audio/webm" });
-      console.log("Created audio blob:", audioBlob.size, "bytes");
+      console.log("🎵 Created audio blob:", audioBlob.size, "bytes");
 
       // Convert to MP3
+      console.log("🔄 Converting to MP3...");
       const mp3Blob = await this.convertToMp3(audioBlob);
 
       // Save to OneDrive
+      console.log("☁️ Saving to OneDrive...");
       await this.saveToOneDrive(mp3Blob, buttonId);
 
+      console.log("✅ Recording processed successfully");
       this.showStatus("Recording saved successfully!", 2000);
 
       // Show continue modal immediately after processing
       this.showContinueModal();
     } catch (error) {
-      console.error("Error processing recording:", error);
+      console.error("❌ Error processing recording:", error);
       this.showStatus(`Error: ${error.message}`, 5000);
       // Re-enable buttons if there was an error
       this.enableButtons();
+    } finally {
+      // Always reset upload flag and button state
+      this.isUploading = false;
+      this.resetButton();
     }
-
-    this.resetButton();
   }
 
   async convertToMp3(audioBlob) {
@@ -700,6 +772,13 @@ class VoiceRecorder {
   }
 
   resetButton() {
+    console.log("🔄 resetButton() called", {
+      hasCurrentButton: !!this.currentButton,
+      isRecording: this.isRecording,
+      mediaRecorderState: this.mediaRecorder?.state || "null",
+      audioChunksLength: this.audioChunks.length,
+    });
+
     if (this.currentButton) {
       this.currentButton.classList.remove("recording");
       this.currentButton.querySelector(".btn-text").textContent =
@@ -711,29 +790,49 @@ class VoiceRecorder {
 
     // Clean up MediaRecorder
     if (this.mediaRecorder) {
+      console.log(
+        "🧹 Cleaning up MediaRecorder, current state:",
+        this.mediaRecorder.state
+      );
       if (this.mediaRecorder.state !== "inactive") {
-        this.mediaRecorder.stop();
+        try {
+          this.mediaRecorder.stop();
+        } catch (error) {
+          console.log("⚠️ Error stopping MediaRecorder:", error.message);
+        }
       }
+      // Remove event listeners to prevent memory leaks
+      this.mediaRecorder.ondataavailable = null;
+      this.mediaRecorder.onstop = null;
+      this.mediaRecorder.onerror = null;
       this.mediaRecorder = null;
     }
 
     // Clean up audio stream
     if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
+      console.log("🧹 Cleaning up audio stream");
+      this.stream.getTracks().forEach((track) => {
+        console.log("🛑 Stopping track:", track.kind, track.label);
+        track.stop();
+      });
       this.stream = null;
     }
 
     // Clean up audio context
     if (this.audioContext) {
+      console.log("🧹 Cleaning up audio context");
       this.audioContext.close();
       this.audioContext = null;
     }
 
     // Clear recording timer if it exists
     if (this.recordingTimer) {
+      console.log("🧹 Clearing recording timer");
       clearTimeout(this.recordingTimer);
       this.recordingTimer = null;
     }
+
+    console.log("✅ Button reset complete");
   }
 
   showStatus(message, duration = null) {
