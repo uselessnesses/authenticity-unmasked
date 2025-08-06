@@ -709,6 +709,26 @@ class VoiceRecorder {
     this.isRecording = false;
     this.audioChunks = [];
 
+    // Clean up MediaRecorder
+    if (this.mediaRecorder) {
+      if (this.mediaRecorder.state !== "inactive") {
+        this.mediaRecorder.stop();
+      }
+      this.mediaRecorder = null;
+    }
+
+    // Clean up audio stream
+    if (this.stream) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+    }
+
+    // Clean up audio context
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+
     // Clear recording timer if it exists
     if (this.recordingTimer) {
       clearTimeout(this.recordingTimer);
