@@ -306,16 +306,6 @@ class VoiceRecorder {
       return;
     }
 
-    // Prevent double-clicking by checking if we're already in a recording process
-    if (
-      this.isRecording &&
-      this.mediaRecorder &&
-      this.mediaRecorder.state === "recording"
-    ) {
-      console.log("⚠️ Already recording, ignoring duplicate click");
-      return;
-    }
-
     const button = document.getElementById("main-record-btn");
     const questionIndex = this.currentQuestionIndex; // Use current question index as ID
 
@@ -323,6 +313,11 @@ class VoiceRecorder {
 
     if (!this.isRecording) {
       console.log("▶️ Starting new recording...");
+      // Prevent double-clicking when starting a new recording
+      if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+        console.log("⚠️ MediaRecorder still active, ignoring start request");
+        return;
+      }
       await this.startRecording(button, questionIndex);
     } else {
       console.log("⏹️ Stopping current recording...");
