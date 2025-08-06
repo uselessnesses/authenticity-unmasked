@@ -163,8 +163,23 @@
 
     <!-- Version Display -->
     <div id="version-display">
-      <span id="version-text">v1.1.1</span>
+      <span id="version-text">v1.1.2</span>
     </div>
+
+    <!-- Invisible clickable area for version display -->
+    <div
+      id="version-trigger"
+      style="
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 60px;
+        height: 60px;
+        cursor: pointer;
+        z-index: 60;
+        background: transparent;
+      "
+    ></div>
 
     <script src="config.js"></script>
     <script src="config-exhibition-questions.js"></script>
@@ -178,8 +193,9 @@
         const branch = "main";
         const versionDisplay = document.getElementById("version-display");
         const versionText = document.getElementById("version-text");
+        const versionTrigger = document.getElementById("version-trigger");
 
-        if (!versionDisplay || !versionText) return;
+        if (!versionDisplay || !versionText || !versionTrigger) return;
 
         // Get version from config
         const version = window.AZURE_CONFIG?.VERSION || "0.59";
@@ -195,26 +211,66 @@
         // Set initial display to short version
         versionText.textContent = shortVersionInfo;
 
-        // Add hover and click functionality
+        // Track visibility and expansion state
+        let isVisible = false;
         let isExpanded = false;
 
+        // Hide after a delay function
+        let hideTimeout;
+        const hideAfterDelay = () => {
+          hideTimeout = setTimeout(() => {
+            if (!isExpanded) {
+              versionDisplay.classList.remove("visible");
+              isVisible = false;
+            }
+          }, 3000); // Hide after 3 seconds
+        };
+
+        // Clear hide timeout
+        const clearHideTimeout = () => {
+          if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+          }
+        };
+
+        // Trigger click to show version
+        versionTrigger.addEventListener("click", () => {
+          if (!isVisible) {
+            versionDisplay.classList.add("visible");
+            isVisible = true;
+            hideAfterDelay();
+          }
+        });
+
+        // Version display interactions when visible
         versionDisplay.addEventListener("mouseenter", () => {
-          if (!isExpanded) {
+          clearHideTimeout();
+          if (isVisible && !isExpanded) {
             versionText.textContent = fullVersionInfo;
           }
         });
 
         versionDisplay.addEventListener("mouseleave", () => {
-          if (!isExpanded) {
+          if (isVisible && !isExpanded) {
             versionText.textContent = shortVersionInfo;
+            hideAfterDelay();
           }
         });
 
         versionDisplay.addEventListener("click", () => {
-          isExpanded = !isExpanded;
-          versionText.textContent = isExpanded
-            ? fullVersionInfo
-            : shortVersionInfo;
+          if (isVisible) {
+            isExpanded = !isExpanded;
+            versionText.textContent = isExpanded
+              ? fullVersionInfo
+              : shortVersionInfo;
+
+            if (isExpanded) {
+              clearHideTimeout();
+            } else {
+              hideAfterDelay();
+            }
+          }
         });
 
         // Try to fetch GitHub commit info
